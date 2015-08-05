@@ -1,0 +1,68 @@
+<?php
+/**
+ * Created by PhpStorm.
+ * User: anythink
+ * Date: 15-8-5
+ * Time: 下午12:52
+ */
+interface baseEvent{
+	function request(swoole_websocket_server $server, swoole_http_request $request);
+	function message(swoole_websocket_server $server, $frame);
+}
+
+class event extends Server{
+	public static $on_list=[];
+	private $includeList = [];
+	private static $init = [];
+	private $server;
+
+	function __construct(){
+		$dir = __DIR__ . '/../event';
+		$list = scandir($dir);
+		foreach($list as $d){
+			if(!isset($this->includeList[$d])){
+				if(substr($d,0,1) != '.'){
+					include($dir.'/'.$d);
+					$this->serverLog('初始化事件模块:'.$dir.'/'.$d);
+				}
+			}
+		}
+	}
+
+
+
+	/**
+	 * 给事件注册调用
+	 * @param $event
+	 * @param $callName
+	 */
+	public static function onAdd($event,$callName){
+		self::$on_list[$event][] = $callName;
+	}
+
+
+
+	function eventOpen($_server,$request){
+		if(self::$on_list['open']){
+			foreach(self::$on_list['open'] as  $class){
+				echo 'call event open :'.$class;
+				if(!isset(self::$init[$class])){
+					self::$init[$class] = new $class();
+				}
+				call_user_func_array([self::$init[$class],'request'],[$_server,$request]);
+			}
+		}
+	}
+
+	function eventMessage(swoole_websocket_server $_server, $frame){
+		if(self::$on_list['message']){
+			foreach(self::$on_list['message'] as $class){
+				echo 'call event message : '.$class.PHP_EOL;
+				if(!isset(self::$init[$class])){
+					self::$init[$class] = new $class();
+				}
+				call_user_func_array([self::$init[$class],'message'],[$_server,$frame]);
+			}
+		}
+	}
+}
