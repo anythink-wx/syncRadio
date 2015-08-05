@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="X-UA-Compatible" content="chrome=1">
+	<meta HTTP-EQUIV="Content-Type" CONTENT="text/html; CHARSET=utf-8">
+	<meta name="viewport" id="viewport">
+	<title>薔薇花園</title>
+	<script>
+
+		function sednSync(){
+			ws.send('sync');
+		}
+
+		function disconnect_websocket(){
+			ws.close();
+		}
+
+		function connect_websocket(){
+			var wsServer = 'ws://127.0.0.1:8810';
+			ws = new WebSocket(wsServer);
+
+
+			ws.onopen = function (evt) {
+				document.getElementById('consolog').innerHTML = '<a href="javascript:;" onclick="disconnect_websocket()">已连接,点击断开</a>';
+			};
+
+			ws.onclose = function (evt) {
+				document.getElementById('consolog').innerHTML = '<a href="javascript:;" onclick="connect_websocket()">连接已断开,点击重连</a>';
+			};
+
+
+			ws.onmessage = function (evt) {
+				document.getElementById('consolog').innerHTML = '从服务器收到数据' + evt.data;
+			};
+
+			ws.onerror = function (e) {
+				alert("异常:" + e.data);
+				console.log("onerror");
+			};
+		}
+
+	</script>
+	</head>
+<body>
+<div>web socket 状态</div>
+<div id="consolog"><a href="javascript:;" onclick="connect_websocket()">无连接，点击连接</a></div>
+</body>
+</html>
