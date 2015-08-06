@@ -18,7 +18,7 @@ class kv {
 
 	static function sharePut($k,$v){
 		$file = ROOT.'/data/'.$k;
-		file_put_contents($file,serialize($v));
+		file_put_contents($file,serialize($v),LOCK_EX);
 	}
 
 	static function shareGet($k){
