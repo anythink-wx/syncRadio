@@ -90,12 +90,13 @@ class Server {
 			$playTime = 0;
 			swoole_set_process_name("syncRadio : player");
 			$player = new player();
-			$id = $player->list[0];
+			$id = $player->shiftMusicList();
 			$data = player::getPlayUrl($id);
 			while(true){
 				if(kv::play_id() == 0 ){
 					kv::play_id($id);
 					kv::play_time($data['length']);
+
 
 				}elseif(kv::play_time() <= 0){
 					$id = $player->shiftMusicList();
@@ -170,7 +171,7 @@ class Server {
 			if($play_time > 0){
 				$play_time-=1;
 				kv::play_time($play_time);
-				$this->serverLog('正在播放 剩余 '.$play_time);
+				$this->serverLog('正在播放 '.$play_id.'剩余 '.$play_time);
 				if($play_time %10 ==0){
 					//$this->serverLog('正在播放 剩余 '.$play_time);
 				}
