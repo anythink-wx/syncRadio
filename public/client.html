@@ -37,10 +37,11 @@
 				var res = eval('('+evt.data+')');
 				if(res.act == 'sync'){
 					console.log(res.data);
-				}
-				if(res.act =='online'){
+				}else if(res.act =='online'){
 					console.log(res.data);
 					document.getElementById('online').innerHTML = '';
+				}else{
+					console.log(res.data);
 				}
 			};
 

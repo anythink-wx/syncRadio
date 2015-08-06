@@ -108,7 +108,7 @@ class Server {
 			$this->playerFlag = -1;
 			$this->playId=0;
 		}
-		$this->serverLog("用户离线:{$_server->worker_pid}: 在线:".$GLOBALS['params']['online']);
+		$this->serverLog("用户离线:{$_server->worker_pid}");
 	}
 
 	function onPlay(){

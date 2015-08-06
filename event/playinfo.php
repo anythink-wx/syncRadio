@@ -18,10 +18,18 @@ class playinfo extends baseEvent{
 	}
 
 	function message(swoole_websocket_server $server,$frame){
-		print_r($frame);
-		if($frame->finish == 1){
-			$controller = Server::badgeDecode($frame->data);
-			print_r($controller);
+		$badge = Server::badgeDecode($frame->data);
+		if($badge->act == 'sync'){
+			if($frame->playId != 0 and $frame->playTime != 0){
+				$response = [
+					'playId'   => $frame->playId,
+					'playTime' => $frame->playTime,
+					'url'      => player::getPlayUrl($frame->playId),
+				];
+				$server->push($frame->fd,Server::badge('sync',$response)); //返回歌曲信息
+			}else{
+				$server->push($frame->fd,Server::badge('sync','wait')); // 返回等待信息
+			}
 		}
 	}
 

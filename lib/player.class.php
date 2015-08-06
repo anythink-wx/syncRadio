@@ -71,6 +71,18 @@ class player{
 	}
 
 	/**
+	 * 获取某首歌的播放地址
+	 * @param $id
+	 */
+	static function getPlayUrl($id){
+		$xiamiUrl = 'http://www.xiami.com/song/playlist/id/' . $id;
+		$source = self::getCurl($xiamiUrl);
+		$argv = simplexml_load_string($source, 'SimpleXMLElement', LIBXML_NOCDATA);
+		$mp3Url = self::de_Location($argv->trackList->track->location);
+		return $mp3Url;
+	}
+
+	/**
 	 * 取出播放列表中的第一首歌
 	 * @return string
 	 */
@@ -97,12 +109,12 @@ class player{
 		$process = new swoole_process(function (swoole_process $worker) use ($id,$filePath) {
 			$xiamiUrl = 'http://www.xiami.com/song/playlist/id/' . $id;
 			echo '开始获取播放信息：' . $xiamiUrl . PHP_EOL;
-			$source = $this->getCurl($xiamiUrl);
+			$source = self::getCurl($xiamiUrl);
 			if(!$source){
 				return false;
 			}
 			$argv = simplexml_load_string($source, 'SimpleXMLElement', LIBXML_NOCDATA);
-			$mp3 = $this->de_Location($argv->trackList->track->location);
+			$mp3 = self::de_Location($argv->trackList->track->location);
 			echo '开始缓冲',PHP_EOL;
 			list($length,$bin) = $this->getStream($mp3);
 
@@ -153,7 +165,7 @@ class player{
 	}
 
 
-	function getCurl($url,$headerOnly=false){
+	static function getCurl($url,$headerOnly=false){
 		$ch = curl_init($url);
 
 		curl_setopt($ch, CURLOPT_URL, $url);
@@ -175,7 +187,7 @@ class player{
 	 * @param $location
 	 * @return mixed|string
 	 */
-	public function de_Location($location){
+	public static function de_Location($location){
 		$loc_2 = (int)substr($location, 0, 1);
 		$loc_3 = substr($location, 1);
 		$loc_4 = floor(strlen($loc_3) / $loc_2);
