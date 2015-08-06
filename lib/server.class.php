@@ -31,6 +31,7 @@ class Server {
 
 	public $online = 0; // 在线用户数
 	protected $playerFlag = -1;             //播放服务状态
+	protected $processFlag = -1;
 
 	/**
 	 * player 实例
@@ -58,13 +59,22 @@ class Server {
 
 
 	private $server;
+	private $process;
 
 
 	function init(){
+		swoole_set_process_name('syncRadio');
 		$server = new swoole_websocket_server("0.0.0.0", 8810);
 		$server->on('open', [$this, 'onOpen']);
 		$server->on('message', [$this, 'onMessage']);
 		$server->on('close', [$this, 'onClose']);
+		$server->set([
+			'reactor_num' => 2, //核心数
+			'worker_num' => 20,    //进程数量
+			'backlog' => 128,   //参数将决定最多同时有多少个待accept的连接
+			'max_request' => 2000, //worker进程在处理完n次请求后结束运行。
+		]);
+
 
 		$this->server = $server;
 		$this->player = new player();
@@ -72,11 +82,51 @@ class Server {
 
 		kv::online(0); //初始化在线统计
 		kv::user([]);  //初始化在线列表
+		kv::play_id(0); //当前播放数
+
+		$this->process = new swoole_process(function(swoole_process $worker){
+			$play_id = 0;
+			$playTime = 0;
+			swoole_set_process_name("syncRadio : player");
+			$player = new player();
+			$id = $player->list[0];
+			$data = player::getPlayUrl($id);
+			while(true){
+				if(kv::play_id() == 0 ){
+					$data['play_id'] = $id;
+					$data['playTime'] = $data['length'];
+					$worker->write(json_encode($data));
+					kv::play_id($data['play_id']);
+				}
+				sleep(1);
+			}
+		});
+		$server->addProcess($this->process);
+	}
+
+	function onProcess(){
+		if($data = $this->process->read()){
+			$data = json_decode($data,true);
+			kv::play_id($data['play_id']);
+
+			$this->playId = $data['play_id'];
+			$this->playTime = $data['length'];
+
+			print_r($data);
+			//$data =  json_decode($data);
+			//kv::play_id($data['play_id']);
+		}else{
+			echo 'proess is no message send'.PHP_EOL;
+		}
+
 	}
 
 
 
 	function onOpen(swoole_websocket_server $_server, swoole_http_request $request)	{
+		if($this->processFlag == -1){
+		//	$this->processFlag = swoole_timer_tick(1000,[$this,'onProcess']);
+		}
 
 		//判断是否启动播放服务
 		if (kv::online() == 0 && $this->playerFlag == -1) {
@@ -108,37 +158,34 @@ class Server {
 			$this->playerFlag = -1;
 			$this->playId=0;
 		}
-		$this->serverLog("用户离线:{$_server->worker_pid}");
+
+		$this->event->eventClose($_server,$fd);
 	}
 
 	function onPlay(){
 
-		if($this->playId == 0) {
-			$this->serverLog("server.class->onplay 正在取播放列表");
-			if($play_id = $this->player->shiftMusicList()){
-				$this->playId = $play_id;
-			}else{
-				$this->serverLog("server.class->onplay 播放列表暂无歌曲");
-			}
-		}elseif($this->playTime < 1){
-			$this->player->getMp3($this->playId);
-			if(isset($this->player->timeList[$this->playId])){
-				$this->playTime = $this->player->timeList[$this->playId];
-				$this->serverLog('已初始化播放曲目 '.$this->playId .' - '.$this->playTime);
-			}else{
-				$this->serverLog('正在初始化播放曲目 '.$this->playId);
-				$this->playTime = 0;
-			}
-		}else{
+		echo kv::play_id();
+		echo 'play id ';
+		print_r($this->playId);
+		echo 'play time ';
+		print_r($this->playTime);
+
+		if($this->playId !=0){
 			$this->playTime--;
+			$this->serverLog('正在播放 剩余 '.$this->playTime);
 			if($this->playTime %10 ==0){
 				$this->serverLog('正在播放 剩余 '.$this->playTime);
 			}
 
-			if($this->playTime < 1){
+			if($this->playTime <0){
 				$this->playId = 0;
-				$this->serverLog('当前曲目播放完毕 '.$this->playId);
+				$this->playTime = 0;
+				kv::play_id(0);
 			}
+
+		}else{
+			$this->playId = 0;
+			$this->serverLog('当前曲目播放完毕 '.$this->playId);
 		}
 	}
 
@@ -167,8 +214,7 @@ class Server {
 		echo $msg.PHP_EOL;
 	}
 
-	private function convert($size)
-	{
+	private function convert($size){
 		$unit=array('b','kb','mb','gb','tb','pb');
 		return @round($size/pow(1024,($i=floor(log($size,1024)))),2).' '.$unit[$i];
 	}

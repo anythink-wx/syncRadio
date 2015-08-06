@@ -24,8 +24,7 @@ class player{
 	private $dataPath;
 	private $timerId=null;
 	private $processList=[];
-	private $list=[
-	];
+	public $list=[];
 
 	function __destruct(){
 		foreach($this->processList as $pid){
@@ -75,11 +74,29 @@ class player{
 	 * @param $id
 	 */
 	static function getPlayUrl($id){
-		$xiamiUrl = 'http://www.xiami.com/song/playlist/id/' . $id;
-		$source = self::getCurl($xiamiUrl);
-		$argv = simplexml_load_string($source, 'SimpleXMLElement', LIBXML_NOCDATA);
-		$mp3Url = self::de_Location($argv->trackList->track->location);
-		return $mp3Url;
+		$data = [];
+		$uri = 'http://www.xiami.com/song/playlist/id/' . $id;
+		$xml_info = ROOT.'/data/'.$id.'.xml';
+		if(file_exists($xml_info)){
+			$source = file_get_contents($xml_info);
+		}else{
+			$source = self::getCurl($uri);
+			file_put_contents($xml_info,$source,LOCK_EX);
+		}
+
+		$argv = simplexml_load_string($source, 'SimpleXMLElement', LIBXML_NOCDATA|LIBXML_NOBLANKS);
+
+		if(is_object($argv)){
+			$data = [
+				'url' => self::de_Location($argv->trackList->track->location),
+				'title' => (string)  $argv->trackList->track->title,
+				'length' =>(string)  $argv->trackList->track->length,
+				'cover' => (string)  $argv->trackList->track->album_pic,
+				'artist' => (string) $argv->trackList->track->artist,
+				'album' => (string)  $argv->trackList->track->album_name,
+			];
+		}
+		return $data;
 	}
 
 	/**
@@ -98,10 +115,60 @@ class player{
 	function getMp3($id){
 		$filePath = "{$this->dataPath}/{$id}";
 		if(!file_exists($filePath)){
-			$this->downloadMp3($id,$filePath);
+			$this->pmp3($id,$filePath);
 		}else{
 			$time = file_get_contents($filePath);
 			$this->timeList[$id] = $time;
+		}
+	}
+
+
+	function pmp3($id,$filePath){
+		echo 'pmp3',PHP_EOL;
+		$self = $this;
+		$process = new swoole_process(function (swoole_process $worker) use ($id) {
+			$data = self::getPlayUrl($id);
+			$this->timeList[$id] = $data['length'];
+		});
+		if($pid = $process->start()){
+			$this->processList[$pid]=$pid;
+			if(null===$this->timerId){
+				$id=swoole_timer_tick(1000,function ($id){
+					$res=swoole_process::wait(false);
+					unset($this->processList[$res['pid']]);
+					if(empty($this->processList)){
+						swoole_timer_clear($id);
+						$this->timerId=null;
+					}
+				});
+				$this->timerId=$id;
+			}
+		}
+	}
+
+	function processLoadMp3($id){
+		echo 'create_process'.PHP_EOL;
+		$that = $this;
+		$process = new swoole_process(function (swoole_process $worker) use ($id) {
+			$data = $that::getPlayUrl($id);
+			if(!empty($data)){
+				$this->timeList[$id] = $data['length'];
+			}
+			var_dump($data);
+		}, true);
+		if($pid = $process->start()){
+			$this->processList[$pid]=$pid;
+			if(null===$this->timerId){
+				$id=swoole_timer_tick(1000,function ($id){
+					$res=swoole_process::wait(false);
+					unset($this->processList[$res['pid']]);
+					if(empty($this->processList)){
+						swoole_timer_clear($id);
+						$this->timerId=null;
+					}
+				});
+				$this->timerId=$id;
+			}
 		}
 	}
 

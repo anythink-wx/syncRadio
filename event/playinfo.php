@@ -24,13 +24,21 @@ class playinfo extends baseEvent{
 				$response = [
 					'playId'   => $frame->playId,
 					'playTime' => $frame->playTime,
-					'url'      => player::getPlayUrl($frame->playId),
 				];
+
+				$response  = array_merge($response,player::getPlayUrl($frame->playId));
+
 				$server->push($frame->fd,Server::badge('sync',$response)); //返回歌曲信息
 			}else{
 				$server->push($frame->fd,Server::badge('sync','wait')); // 返回等待信息
 			}
+		//添加歌曲
+		}elseif($badge->act == 'add'){
+			$player = new player();
+			//$player->
 		}
+
+
 	}
 
 	function close(swoole_websocket_server $server, $frame){}
