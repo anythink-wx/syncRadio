@@ -463,24 +463,26 @@ function wait_sync(){
             //var j = {"act":"sync","data":{"playId":"1769821950","playTime":"262","url":"http://127.0.0.1/xiami/1.mp3","title":"Eternal Light","length":"261","cover":"http:\/\/img.xiami.net\/images\/album\/img24\/46824\/3686691384929141.jpg","artist":"Libera","album":"Peace"}};
             //var A = new Audio();
             //A.src = _u(r[0].mp3);
-            $('#xiami').attr({'src': r.data.url,'title':r.title});
+            console.log('music');
+            console.log(r);
+            $('#xiami').attr({'src': r.url,'title':r.title});
             //console.log(r);
-            $('.name').text(r.data.title);
-            $('.album_name span').text(r.data.title);
-            $('.artist span').text(r.data.artist);
+            $('.name').text(r.title);
+            $('.album_name span').text(r.title);
+            $('.artist span').text(r.artist);
             var list={},playList=[];
             for(var l=r.length,i=0;i<l;i++){
                 //list=list.concat(r);
-                list[r[i].xid]=r[i];
-                playList.push(r[i].xid);
+               // list[r[i].xid]=r[i];
+               // playList.push(r[i].xid);
             }
             console.log(playList[0]);
             //$('.Cover').html("<img src='http://img.xiami.net/images/album/"+r[0].img.substring(0,r[0].img.length-6)+".jpg' alt=''/>");
-            $('.Cover').css('background-image','url('+r.data.cover+')');
-            $('.Cover-2').css('background-image','url('+r.data.cover+')');
+            $('.Cover').css('background-image','url('+r.cover+')');
+            $('.Cover-2').css('background-image','url('+r.cover+')');
             if($('body').is('.adj')){
                 xiami.addEventListener('canplay',function(){
-                    var musicTime = xiami.duration - r.data.playTime;
+                    var musicTime = xiami.duration - r.playTime;
                     if(xiami.duration > musicTime ){
                         xiami.currentTime=musicTime;
                     }else{
@@ -585,8 +587,9 @@ function wait_sync(){
 
         //下一曲
         function next(id,Mode){
-            var j = {"act":"sync","data":{"playId":"1769821950","playTime":"262","url":"http://127.0.0.1/xiami/1.mp3","title":"Eternal Light","length":"261","cover":"http:\/\/img.xiami.net\/images\/album\/img24\/46824\/3686691384929141.jpg","artist":"Libera","album":"Peace"}};
-            music(j);
+          //  var j = {"act":"sync","data":{"playId":"1769821950","playTime":"262","url":"http://127.0.0.1/xiami/1.mp3","title":"Eternal Light","length":"261","cover":"http:\/\/img.xiami.net\/images\/album\/img24\/46824\/3686691384929141.jpg","artist":"Libera","album":"Peace"}};
+            ws.send('{"act":"sync"}');
+           // music(j);
             /*var mod = 0;
              if(Mode == 1){
                  var mod = 'song&id';
