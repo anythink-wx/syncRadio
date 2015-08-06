@@ -34,7 +34,7 @@ class player{
 	}
 
 	public function __construct(){
-		$this->dataPath=__DIR__ . '/../data';
+		$this->dataPath = ROOT . '/data';
 		$this->loadMusicList();
 	}
 
@@ -44,7 +44,7 @@ class player{
 	 */
 	private function loadMusicList(){
 		$list = $contents = "";
-		$file =  __DIR__.'/'.$this->playList;
+		$file =  ROOT.'/lib/'.$this->playList;
 		if(!file_exists($file)){
 			file_put_contents($file,"");
 		}else{
@@ -66,7 +66,7 @@ class player{
 		}
 
 		$string = implode("\n",$this->list);
-		$file =  __DIR__.'/'.$this->playList;
+		$file =  ROOT.'/lib/'.$this->playList;
 		file_put_contents($file,$string);
 	}
 

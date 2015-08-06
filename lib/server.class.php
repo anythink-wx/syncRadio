@@ -147,15 +147,12 @@ class Server {
 		return json_encode(['act'=>$action,'data'=>$message]);
 	}
 	static function badgeDecode($str){
-		json_decode($str);
-		$std = new stdClass();
-		$std->act = $str['act'];
-		$std->data = $str['data'];
-		return $std;
+		$str = json_decode($str);
+		return $str;
 	}
 
 	function serverLog($msg){
-		$logPath = __DIR__ .'/../data/server.log';
+		$logPath = ROOT .'/data/server.log';
 		if(method_exists($this,'stats')){
 			$stats = $this->server->stats();
 			$msgFormat = '['.date('Y-m-d H:i:s').'] '.$msg.
