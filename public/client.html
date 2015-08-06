@@ -5,6 +5,9 @@
 	<meta HTTP-EQUIV="Content-Type" CONTENT="text/html; CHARSET=utf-8">
 	<meta name="viewport" id="viewport">
 	<title>薔薇花園</title>
+	<script src="static/jquery.js"></script>
+	<script src="static/json2.js"></script>
+
 	<script>
 
 		function sednSync(){
@@ -30,13 +33,25 @@
 
 
 			ws.onmessage = function (evt) {
-				document.getElementById('consolog').innerHTML = '从服务器收到数据' + evt.data;
+				console.log(evt.data);
+				var res = eval('('+evt.data+')');
+				if(res.act == 'sync'){
+					console.log(res.data);
+				}
+				if(res.act =='online'){
+					console.log(res.data);
+					document.getElementById('online').innerHTML = '';
+				}
 			};
 
 			ws.onerror = function (e) {
 				alert("异常:" + e.data);
 				console.log("onerror");
 			};
+			$('#send').click(function(){
+				arrayObj = {"act":$('#act').val() ,"msg": $('#msg').val()};
+				ws.send(JSON.stringify(arrayObj));
+			});
 		}
 
 	</script>
@@ -44,5 +59,10 @@
 <body>
 <div>web socket 状态</div>
 <div id="consolog"><a href="javascript:;" onclick="connect_websocket()">无连接，点击连接</a></div>
+<div id="online"></div>
+<div><input type="text" id="act" placeholder="act"/>
+	<input type="text" id="msg" placeholder="message" />
+	<input type="button" id="send" value="submit">
+</div>
 </body>
 </html>
