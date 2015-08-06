@@ -162,23 +162,17 @@ class Server {
 	}
 
 	function onPlay(){
-
 		$play_id = kv::play_id();
-
 		$play_time = kv::play_time();
-		
-		echo 'play id ' . $play_id . PHP_EOL;
-
-		echo 'play time ' . $play_time . PHP_EOL;
 
 
 		if($play_id !=0){
 			if($play_time > 0){
-				$play_time-=40;
+				$play_time-=1;
 				kv::play_time($play_time);
 				$this->serverLog('正在播放 剩余 '.$play_time);
 				if($play_time %10 ==0){
-					$this->serverLog('正在播放 剩余 '.$play_time);
+					//$this->serverLog('正在播放 剩余 '.$play_time);
 				}
 
 			}else{
