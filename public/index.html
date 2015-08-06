@@ -389,6 +389,12 @@
 <script type="text/javascript">
 
 
+function wait_sync(){
+
+
+}
+
+
     $(document).ready(function(){
 
 		var wsServer = 'ws://127.0.0.1:8810';
@@ -399,8 +405,10 @@
 
 
 
-			ws.send('{"act":"sync"}');
-			console.log('发送同步请求');
+
+
+            ws.send('{"act":"sync"}');
+
 		};
 
 		ws.onclose = function (evt) {
@@ -413,6 +421,14 @@
 			var res = eval('('+evt.data+')');
 			if(res.act == 'sync'){
 				if(res.data == 'wait'){
+                    //
+
+                    console.log('等2秒再发送同步信息');
+                    setTimeout(2000,function(){
+                        ws.send('{"act":"sync"}');
+
+                    });
+
 
 				}else{
 					console.log('播放ID:'+res.data.playId);
