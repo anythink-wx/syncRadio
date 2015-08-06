@@ -84,6 +84,7 @@ class Server {
 		kv::user([]);  //初始化在线列表
 		kv::play_id(0); //当前播放数
 		kv::play_time(0); //剩余时间
+        kv::play_end(0); //播放停止
 
 		$this->process = new swoole_process(function(swoole_process $worker){
 			$play_id = 0;
@@ -105,6 +106,7 @@ class Server {
 						kv::play_id($id);
 						kv::play_time($data['length']);
 					}else{
+                        kv::play_end(1);
 						echo '没歌啦'.PHP_EOL;
 					}
 				}elseif(kv::play_time() >=5 and kv::play_time() <=10){
@@ -169,7 +171,7 @@ class Server {
 
 		if($play_id !=0){
 			if($play_time > 0){
-				$play_time-=1;
+				$play_time-=110;
 				kv::play_time($play_time);
 				$this->serverLog('正在播放 '.$play_id.'剩余 '.$play_time);
 				if($play_time %10 ==0){
