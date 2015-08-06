@@ -1,2 +1,2 @@
 # syncRadio
-a sync radio based on swoole
+a sync radio powered by swoole
