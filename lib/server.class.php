@@ -7,7 +7,7 @@
  */
 
 
-class keyValue {
+class kv {
 	public static function __callStatic($name, $arguments)	{
 		if(empty($arguments)){
 			return self::shareGet($name);
@@ -65,30 +65,27 @@ class Server {
 		$server->on('open', [$this, 'onOpen']);
 		$server->on('message', [$this, 'onMessage']);
 		$server->on('close', [$this, 'onClose']);
-		$GLOBALS['params']['online'] = 0;
 
 		$this->server = $server;
 		$this->player = new player();
 		$this->event  = new event();
-		keyValue::online(0);
-		keyValue::user([]);
+
+		kv::online(0); //初始化在线统计
+		kv::user([]);  //初始化在线列表
 	}
 
 
 
 	function onOpen(swoole_websocket_server $_server, swoole_http_request $request)	{
 
-		if (keyValue::online() == 0 && $this->playerFlag == -1) {
+		//判断是否启动播放服务
+		if (kv::online() == 0 && $this->playerFlag == -1) {
 			$this->playerFlag = swoole_timer_tick(1000,[$this,'onPlay']);
 			$this->serverLog('播放模块已启动,模块ID：'.$this->playerFlag);
 		}
 
-		keyValue::online(keyValue::online()+1);
-		$user = keyValue::user();
-		$user[] = $request->fd;
-		keyValue::user($user);
+		//加载open事件模块
 		$this->event->eventOpen($_server,$request);
-		$this->serverLog("新用户连线:{$_server->worker_pid}: 标示 fd#{$request->fd} 在线:".keyValue::online());
 	}
 
 
@@ -97,24 +94,15 @@ class Server {
 	function onMessage(swoole_websocket_server $_server, $frame){
 		$frame->playId = $this->playId;
 		$frame->playTime = $this->playTime;
+
 		$this->event->eventMessage($_server,$frame);
-		//echo "received " . strlen($frame->data) . $this->playId .'<->'. $this->playTime." bytes\n";
 	}
-	static function badge($action,$message){
-		return json_encode(['act'=>$action,'data'=>$message]);
-	}
-	static function badgeDecode($str){
-		 json_decode($str);
-		$std = new stdClass();
-		$std->act = $str['act'];
-		$std->data = $str['data'];
-		return $std;
-	}
+
+
 
 	function onClose(swoole_websocket_server $_server, $fd){
-		//$GLOBALS['params']['online'] -=1;
 
-		if ($GLOBALS['params']['online'] <= 0 && $this->playerFlag != -1) {
+		if (kv::online() <= 0 && $this->playerFlag != -1) {
 			swoole_timer_clear($this->playerFlag);
 			$this->serverLog("播放模块已停止工作");
 			$this->playerFlag = -1;
@@ -152,7 +140,18 @@ class Server {
 				$this->serverLog('当前曲目播放完毕 '.$this->playId);
 			}
 		}
+	}
 
+
+	static function badge($action,$message){
+		return json_encode(['act'=>$action,'data'=>$message]);
+	}
+	static function badgeDecode($str){
+		json_decode($str);
+		$std = new stdClass();
+		$std->act = $str['act'];
+		$std->data = $str['data'];
+		return $std;
 	}
 
 	function serverLog($msg){
