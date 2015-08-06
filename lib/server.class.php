@@ -83,6 +83,7 @@ class Server {
 		kv::online(0); //初始化在线统计
 		kv::user([]);  //初始化在线列表
 		kv::play_id(0); //当前播放数
+		kv::play_time(0); //剩余时间
 
 		$this->process = new swoole_process(function(swoole_process $worker){
 			$play_id = 0;
@@ -93,40 +94,38 @@ class Server {
 			$data = player::getPlayUrl($id);
 			while(true){
 				if(kv::play_id() == 0 ){
-					$data['play_id'] = $id;
-					$data['playTime'] = $data['length'];
-					$worker->write(json_encode($data));
-					kv::play_id($data['play_id']);
-				}
+					kv::play_id($id);
+					kv::play_time($data['length']);
+
+				}elseif(kv::play_time() <= 0){
+					$id = $player->shiftMusicList();
+					if($id){
+						$data = player::getPlayUrl($id);
+						kv::play_id($id);
+						kv::play_time($data['length']);
+					}else{
+						echo '没歌啦'.PHP_EOL;
+					}
+				}elseif(kv::play_time() >=5 and kv::play_time() <=10){
+                    //
+                    $id = $player->list[0];
+                    $data = player::getPlayUrl($id);
+                    echo '预下载'.$id.PHP_EOL;
+                    sleep(6);
+                }
 				sleep(1);
 			}
 		});
 		$server->addProcess($this->process);
 	}
 
-	function onProcess(){
-		if($data = $this->process->read()){
-			$data = json_decode($data,true);
-			kv::play_id($data['play_id']);
-
-			$this->playId = $data['play_id'];
-			$this->playTime = $data['length'];
-
-			print_r($data);
-			//$data =  json_decode($data);
-			//kv::play_id($data['play_id']);
-		}else{
-			echo 'proess is no message send'.PHP_EOL;
-		}
-
-	}
+	
 
 
 
 	function onOpen(swoole_websocket_server $_server, swoole_http_request $request)	{
-		if($this->processFlag == -1){
-		//	$this->processFlag = swoole_timer_tick(1000,[$this,'onProcess']);
-		}
+
+		echo ' zaixian'.count($_server->connections);
 
 		//判断是否启动播放服务
 		if (kv::online() == 0 && $this->playerFlag == -1) {
@@ -164,27 +163,30 @@ class Server {
 
 	function onPlay(){
 
-		echo kv::play_id();
-		echo 'play id ';
-		print_r($this->playId);
-		echo 'play time ';
-		print_r($this->playTime);
+		$play_id = kv::play_id();
 
-		if($this->playId !=0){
-			$this->playTime--;
-			$this->serverLog('正在播放 剩余 '.$this->playTime);
-			if($this->playTime %10 ==0){
-				$this->serverLog('正在播放 剩余 '.$this->playTime);
-			}
+		$play_time = kv::play_time();
+		
+		echo 'play id ' . $play_id . PHP_EOL;
 
-			if($this->playTime <0){
-				$this->playId = 0;
-				$this->playTime = 0;
-				kv::play_id(0);
+		echo 'play time ' . $play_time . PHP_EOL;
+
+
+		if($play_id !=0){
+			if($play_time > 0){
+				$play_time-=40;
+				kv::play_time($play_time);
+				$this->serverLog('正在播放 剩余 '.$play_time);
+				if($play_time %10 ==0){
+					$this->serverLog('正在播放 剩余 '.$play_time);
+				}
+
+			}else{
+				kv::play_time(0);
 			}
 
 		}else{
-			$this->playId = 0;
+			kv::play_time(0);
 			$this->serverLog('当前曲目播放完毕 '.$this->playId);
 		}
 	}
