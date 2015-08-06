@@ -18,12 +18,11 @@ json数据格式 act 为指令名称，data 为指令参数。
 ##  响应
 
  * online 无参数，返回当前服务器在线数，返回类型为整型
- * sync 无参数,返回当前服务播放状态,返回类型为wait,或数组,如为wait需要等待1秒后继续发起同步请求
-
+ * sync 无参数,返回当前服务播放状态,返回类型为wait,或数组,如为wait需要等待1秒后继续发起sync请求
 
 ## Contributors
 
 *  anythink  (http://anythink.com.cn ) : project manager
-* vtnil  (http://vtnil.com ) :project Contributors
+* vtnil  (http://vtnil.com ) :project contributor
 
 powered by swoole
