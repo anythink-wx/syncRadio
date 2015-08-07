@@ -9,6 +9,14 @@ event::onAdd(event::EVENT_OPEN,   'user');
 event::onAdd(event::EVENT_MESSAGE,'user');
 event::onAdd(event::EVENT_CLOSE,  'user');
 
+
+event::onAdd(event::EVENT_OPEN, 'playinfo');
+event::onAdd(event::EVENT_MESSAGE, 'playinfo');
+
+event::onAdd(event::EVENT_OPEN,   'chat');
+event::onAdd(event::EVENT_MESSAGE,'chat');
+event::onAdd(event::EVENT_CLOSE,  'chat');
+
 class user extends  baseEvent{
 
 

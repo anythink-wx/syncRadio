@@ -5,8 +5,7 @@
  * Date: 15-8-5
  * Time: 下午2:13
  */
-event::onAdd(event::EVENT_OPEN, 'playinfo');
-event::onAdd(event::EVENT_MESSAGE, 'playinfo');
+
 
 class playinfo extends baseEvent{
 
