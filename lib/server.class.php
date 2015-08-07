@@ -85,7 +85,6 @@ class Server {
 		kv::user([]);  //初始化在线列表
 		kv::play_id(0); //当前播放数
 		kv::play_time(0); //剩余时间
-        kv::play_end(0); //播放停止
 
 		$this->process = new swoole_process(function(swoole_process $worker){
 			$play_id = 0;
@@ -107,8 +106,8 @@ class Server {
 						kv::play_id($id);
 						kv::play_time($data['length']);
 					}else{
-                        kv::play_end(1);
-						echo '没歌啦'.PHP_EOL;
+						$player->loadMusicList();
+						echo '重置播放列表'.PHP_EOL;
 					}
 				}elseif(kv::play_time() >=5 and kv::play_time() <=10){
                     //
@@ -128,57 +127,39 @@ class Server {
 
 
 	function onOpen(swoole_websocket_server $_server, swoole_http_request $request)	{
-
-		//判断是否启动播放服务
-		if (kv::online() == 0 && $this->playerFlag == -1) {
-			$this->playerFlag = swoole_timer_tick(1000,[$this,'onPlay']);
-			$this->serverLog('播放模块已启动,模块ID：'.$this->playerFlag);
-		}
-
-		//加载open事件模块
-		$this->event->eventOpen($_server,$request);
-	}
-
-
-	function onRequest(swoole_http_request $request, swoole_http_response $response){
-		$path_info =  $request->server['path_info'];
-		if($path_info == '/'){
-			ob_start();
-			include ROOT.'/public/index.html';
-			$content = ob_get_clean();
-			$response->end($content);
-		}else{
-			$static = ROOT .'/public'. $path_info;
-			if(is_file($static)){
-				$response->end(file_get_contents($static));
-			}else{
-				$response->end();
+		$status = $_server->connection_info($request->fd);
+		if($status['websocket_status'] != 0){
+			//判断是否启动播放服务
+			if (kv::online() == 0 && $this->playerFlag == -1) {
+				$this->playerFlag = swoole_timer_tick(1000,[$this,'onPlay']);
+				$this->serverLog('播放模块已启动,模块ID：'.$this->playerFlag);
 			}
+
+			//加载open事件模块
+			$this->event->eventOpen($_server,$request);
 		}
 	}
-
-
-
 
 	function onMessage(swoole_websocket_server $_server, $frame){
-		$frame->playId = $this->playId;
-		$frame->playTime = $this->playTime;
-
 		$this->event->eventMessage($_server,$frame);
 	}
 
 
 
 	function onClose(swoole_websocket_server $_server, $fd){
+		$status = $_server->connection_info($fd);
+		if($status['websocket_status'] != 0){
 
-		if (kv::online() <= 0 && $this->playerFlag != -1) {
-			swoole_timer_clear($this->playerFlag);
-			$this->serverLog("播放模块已停止工作");
-			$this->playerFlag = -1;
-			$this->playId=0;
+			$this->event->eventClose($_server,$fd);
+
+			if (kv::online() <= 0) {
+				swoole_timer_clear($this->playerFlag);
+				$this->serverLog("播放模块已停止工作");
+				$this->playerFlag = -1;
+				$this->playId=0;
+			}
+
 		}
-
-		$this->event->eventClose($_server,$fd);
 	}
 
 	function onPlay(){
@@ -202,6 +183,23 @@ class Server {
 		}else{
 			kv::play_time(0);
 			$this->serverLog('当前曲目播放完毕 '.$this->playId);
+		}
+	}
+
+	function onRequest(swoole_http_request $request, swoole_http_response $response){
+		$path_info =  $request->server['path_info'];
+		if($path_info == '/'){
+			ob_start();
+			include ROOT.'/public/index.html';
+			$content = ob_get_clean();
+			$response->end($content);
+		}else{
+			$static = ROOT .'/public'. $path_info;
+			if(is_file($static)){
+				$response->end(file_get_contents($static));
+			}else{
+				$response->end();
+			}
 		}
 	}
 

@@ -41,7 +41,7 @@ class player{
 	/**
 	 * 获取播放列表
 	 */
-	private function loadMusicList(){
+	public function loadMusicList(){
 		$list = $contents = "";
 		$file =  ROOT.'/lib/'.$this->playList;
 		if(!file_exists($file)){

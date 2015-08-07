@@ -16,8 +16,13 @@ class user extends  baseEvent{
 		$user = kv::user();
 		$user[$request->fd] = $request->fd;
 		kv::user($user);
-		$online = kv::online()+1;
+
+
+
+		$online = kv::online();
+		$online+=1;
 		kv::online($online);
+
 
 		$this->broadcast(Server::badge('online',$online),$server); //广播在线用户数
 		$this->eventLog(__CLASS__,'已记录当前用户连接 #'.$request->fd .'当前在线:'.$online);
@@ -33,11 +38,14 @@ class user extends  baseEvent{
 	}
 
 	function close(swoole_websocket_server $server, $fd){
+
 		$user = kv::user();
 		unset($user[$fd]);
 		kv::user($user);
 
-		$online = kv::online(kv::online()-1);
+		$online = kv::online();
+		$online-=1;
+		kv::online($online);
 
 		if($online >0){
 			$this->broadcast(Server::badge('online',$online),$server); //广播在线用户数
