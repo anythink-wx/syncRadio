@@ -20,13 +20,11 @@ class playinfo extends baseEvent{
 	function message(swoole_websocket_server $server,$frame){
 		$badge = Server::badgeDecode($frame->data);
 		if($badge->act == 'sync'){
-			if(kv::play_id() != 0 and kv::play_end() !=1 ){
+			if(kv::play_id() != 0){
                 $response = player::getPlayUrl(kv::play_id());
                 $response['playId'] = kv::play_id();
                 $response['playTime'] = kv::play_time();
 				$server->push($frame->fd,Server::badge('sync',$response)); //返回歌曲信息
-			}elseif(kv::play_end() == 1) {
-                $server->push($frame->fd,Server::badge('sync','playend')); // 服务端结束播放
             }else{
 				$server->push($frame->fd,Server::badge('sync','wait')); // 返回等待信息
 			}
