@@ -49,7 +49,7 @@ class player{
 		}else{
 			$contents = file_get_contents($file);
 		}
-		$list = explode("\n",$contents);
+		$list = explode("\r\n",$contents);
 		$this->list = $list;
 	}
 
