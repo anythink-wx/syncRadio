@@ -16,7 +16,7 @@ class user extends  baseEvent{
 		$user = kv::user();
 		$user[$request->fd] = $request->fd;
 		kv::user($user);
-		$online = ($server->connections);
+		$online = count($server->connections);
 		kv::online($online);
 
 		$this->broadcast(Server::badge('online',$online),$server); //广播在线用户数
