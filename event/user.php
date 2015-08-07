@@ -18,7 +18,6 @@ class user extends  baseEvent{
 		kv::user($user);
 
 
-
 		$online = kv::online();
 		$online+=1;
 		kv::online($online);
@@ -31,9 +30,20 @@ class user extends  baseEvent{
 	function message(swoole_websocket_server $server,$frame){
 
 		$badge = Server::badgeDecode($frame->data);
+		print_r($badge);
 		if($badge->act == 'online'){
 			$online = count($server->connections);
 			$server->push($frame->fd,Server::badge('online',$online));
+		}elseif($badge->act =='addsong'){
+			$player = new player();
+			$data = player::getPlayUrl((int)$badge->msg);
+			if(!empty($data)){
+				$player->pushMusicList((int)$badge->msg);
+				$response = Server::badge('ok','歌曲添加成功');
+			}else{
+				$response = Server::badge('error','歌曲不存在');
+			}
+			$server->push($frame->fd,$response);
 		}
 	}
 

@@ -31,7 +31,6 @@ class Server {
 
 	public $online = 0; // 在线用户数
 	protected $playerFlag = -1;             //播放服务状态
-	protected $processFlag = -1;
 
 	/**
 	 * player 实例
@@ -43,21 +42,6 @@ class Server {
 	 * @var event
 	 */
 	private $event;
-
-
-	/**
-	 * 当前播放曲目
-	 * @var int
-	 */
-	public $playId = 0;
-
-	/**
-	 * 当前剩余时间
-	 * @var int
-	 */
-	public $playTime = 0;
-
-
 	private $server;
 	private $process;
 
@@ -65,6 +49,7 @@ class Server {
 	function init(){
 		swoole_set_process_name('syncRadio');
 		$server = new swoole_websocket_server("0.0.0.0", 8810);
+		$server->addlistener('127.0.0.1',8811,SWOOLE_SOCK_TCP);
 		$server->on('open', [$this, 'onOpen']);
 		$server->on('message', [$this, 'onMessage']);
 		$server->on('close', [$this, 'onClose']);
@@ -149,16 +134,13 @@ class Server {
 	function onClose(swoole_websocket_server $_server, $fd){
 		$status = $_server->connection_info($fd);
 		if($status['websocket_status'] != 0){
-
 			$this->event->eventClose($_server,$fd);
 
 			if (kv::online() <= 0) {
 				swoole_timer_clear($this->playerFlag);
 				$this->serverLog("播放模块已停止工作");
 				$this->playerFlag = -1;
-				$this->playId=0;
 			}
-
 		}
 	}
 
@@ -196,6 +178,7 @@ class Server {
 		}else{
 			$static = ROOT .'/public'. $path_info;
 			if(is_file($static)){
+				$response->header('Last-Modified',date('D, d M Y H:i:s', filemtime($static)) .' GMT');
 				$response->end(file_get_contents($static));
 			}else{
 				$response->end();

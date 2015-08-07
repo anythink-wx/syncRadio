@@ -49,7 +49,9 @@ class player{
 		}else{
 			$contents = file_get_contents($file);
 		}
-		$list = explode("\r\n",$contents);
+		$_list = explode("\r\n",$contents);
+		$list = [];
+		foreach($_list as $d) $list[$d] = $d;
 		$this->list = $list;
 	}
 
@@ -57,14 +59,8 @@ class player{
 	function pushMusicList($id){
 		//如果没有list，则初始化music列表
 		if(!$this->list) $this->loadMusicList();
-
-		if(is_array($this->list)){
-			array_push($this->list,$id);
-		}else{
-			$this->list[] = $id;
-		}
-
-		$string = implode("\n",$this->list);
+		$this->list[$id] = $id;
+		$string = implode("\r\n",$this->list);
 		$file =  ROOT.'/lib/'.$this->playList;
 		file_put_contents($file,$string);
 	}
