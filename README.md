@@ -22,7 +22,7 @@ json数据格式 act 为指令名称，data 为指令参数。
 
 ## Contributors
 
-*  anythink  (http://anythink.com.cn ) : project manager
+* anythink  (http://anythink.com.cn ) : project manager
 * vtnil  (http://vtnil.com ) :project contributor
 
 powered by swoole
