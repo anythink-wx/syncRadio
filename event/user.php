@@ -16,17 +16,19 @@ class user extends  baseEvent{
 		$user = kv::user();
 		$user[$request->fd] = $request->fd;
 		kv::user($user);
-		kv::online(kv::online()+1);
+		$online = ($server->connections);
+		kv::online($online);
 
-		$this->broadcast(Server::badge('online',kv::online()),$server); //广播在线用户数
-		$this->eventLog(__CLASS__,'已记录当前用户连接 #'.$request->fd .'当前在线:'.kv::online());
+		$this->broadcast(Server::badge('online',$online),$server); //广播在线用户数
+		$this->eventLog(__CLASS__,'已记录当前用户连接 #'.$request->fd .'当前在线:'.$online);
 	}
 
 	function message(swoole_websocket_server $server,$frame){
 
 		$badge = Server::badgeDecode($frame->data);
 		if($badge->act == 'online'){
-			$server->push($frame->fd,Server::badge('online',kv::online()));
+			$online = count($server->connections);
+			$server->push($frame->fd,Server::badge('online',$online));
 		}
 	}
 
@@ -35,11 +37,12 @@ class user extends  baseEvent{
 		unset($user[$fd]);
 		kv::user($user);
 
-		kv::online(kv::online()-1);
-		print_r(kv::user());
-		if(kv::online() >0){
-			$this->broadcast(Server::badge('online',kv::online()),$server); //广播在线用户数
+		$online = count($server->connections);
+
+		if($online >0){
+			$this->broadcast(Server::badge('online',$online),$server); //广播在线用户数
 		}
+		kv::online($online);
 		$this->eventLog(__CLASS__,'用户离线 #'.$fd.' 当前在线:'.kv::online());
 	}
 
