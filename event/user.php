@@ -30,7 +30,6 @@ class user extends  baseEvent{
 	function message(swoole_websocket_server $server,$frame){
 
 		$badge = Server::badgeDecode($frame->data);
-		print_r($badge);
 		if($badge->act == 'online'){
 			$online = count($server->connections);
 			$server->push($frame->fd,Server::badge('online',$online));
