@@ -9,7 +9,7 @@
     <script src="static/jquery-1.11.1.min.js"></script>
     <script src="static/jquery.cookie.js"></script>
     <script src="static/fastclick.js"></script>
-    <link href="static/xiami.css" rel="stylesheet">
+    <link href="./xiami.css" rel="stylesheet">
     <style>
         html ,
         body {
@@ -389,19 +389,19 @@
 <script type="text/javascript">
 
 
-function wait_sync(){
+    function wait_sync(){
 
 
-}
+    }
 
 
     $(document).ready(function(){
 
-		var wsServer = 'ws://127.0.0.1:8810';
-		ws = new WebSocket(wsServer);
+        var wsServer = 'ws://123.59.65.195:8810';
+        ws = new WebSocket(wsServer);
 
 
-		ws.onopen = function (evt) {
+        ws.onopen = function (evt) {
 
 
 
@@ -409,18 +409,18 @@ function wait_sync(){
 
             ws.send('{"act":"sync"}');
 
-		};
+        };
 
-		ws.onclose = function (evt) {
-			$('#status').html('已断开与服务器的链接');
-		};
+        ws.onclose = function (evt) {
+            $('#status').html('已断开与服务器的链接');
+        };
 
 
-		ws.onmessage = function (evt) {
-			console.log(evt.data);
-			var res = eval('('+evt.data+')');
-			if(res.act == 'sync'){
-				if(res.data == 'wait'){
+        ws.onmessage = function (evt) {
+            console.log(evt.data);
+            var res = eval('('+evt.data+')');
+            if(res.act == 'sync'){
+                if(res.data == 'wait'){
                     //
 
                     console.log('等2秒再发送同步信息');
@@ -430,36 +430,49 @@ function wait_sync(){
                     });
 
 
-				}else{
-					console.log('播放ID:'+res.data.playId);
-					console.log('播放偏移:'+res.data.playTime);
-					console.log('播放地址:'+res.data.url);
-					music(res.data);
-				}
-				console.log(res.data);
-			}else if(res.act =='online'){
-				console.log(res.data);
-				$('#status').html("当前在线用户:"+res.data);
-			}else{
-				console.log(res.data);
-			}
-		};
+                }else{
+                    console.log('播放ID:'+res.data.playId);
+                    console.log('播放偏移:'+res.data.playTime);
+                    console.log('播放地址:'+res.data.url);
+                    music(res.data,1);
+                }
+                console.log(res.data);
+            }else if(res.act =='online'){
+                console.log(res.data);
+                $('#status').html("有"+res.data+"人与您共同聆听");
+            }else{
+                console.log(res.data);
+            }
+        };
 
-		ws.onerror = function (e) {
-			$('#status').html('已断开与服务器的链接');
-			console.log("onerror");
-		};
+        ws.onerror = function (e) {
+            $('#status').html('已断开与服务器的链接');
+            console.log("onerror");
+        };
 
         //跨域（可跨所有域名）
-        var _u = function (str) {
+        /*var _u = function (str) {
             for (var _a = parseInt(str),_n = str.substr(1),_c = Math.floor(_n.length / _a),_y = _n.length % _a,_s = new Array(),i = 0; i < _y; i++)_s[i] = _n.substr((_c + 1) * i, _c + 1);
             for (i = _y; i < _a; i++)_s[i] = _n.substr(_c * (i - _y) + (_c + 1) * _y, _c);
             for (i = 0, _c = _n = ''; i < _s[0].length; i++)for (j = 0; j < _s.length; j++)_c += _s[j].substr(i, 1);
             for (i = 0, _c = unescape(_c); i < _c.length; i++)_c.substr(i, 1) == '^' ? _n += '0' : _n += _c.substr(i, 1);
             return _n;
-        };
+        };*/
         var xiami = document.getElementById("xiami");
-        function music(r){
+
+		//播放结束后执行
+		xiami.addEventListener('ended',function(){
+			//获取下一首歌曲
+			if($('body').is('.adj')){
+				console.log('电台播放,已经播放结束.发送同步');
+				ws.send('{"act":"sync"}');
+			}else{
+				console.log('自主播放,已经播放结束.开始执行下一首歌曲');
+				next(0,2);
+			}
+		},false);
+
+        function music(r,mod){
             //var j = {"act":"sync","data":{"playId":"1769821950","playTime":"262","url":"http://127.0.0.1/xiami/1.mp3","title":"Eternal Light","length":"261","cover":"http:\/\/img.xiami.net\/images\/album\/img24\/46824\/3686691384929141.jpg","artist":"Libera","album":"Peace"}};
             //var A = new Audio();
             //A.src = _u(r[0].mp3);
@@ -470,31 +483,28 @@ function wait_sync(){
             $('.name').text(r.title);
             $('.album_name span').text(r.title);
             $('.artist span').text(r.artist);
-            var list={},playList=[];
-            for(var l=r.length,i=0;i<l;i++){
-                //list=list.concat(r);
-               // list[r[i].xid]=r[i];
-               // playList.push(r[i].xid);
-            }
-            console.log(playList[0]);
-            //$('.Cover').html("<img src='http://img.xiami.net/images/album/"+r[0].img.substring(0,r[0].img.length-6)+".jpg' alt=''/>");
+
             $('.Cover').css('background-image','url('+r.cover+')');
             $('.Cover-2').css('background-image','url('+r.cover+')');
-            if($('body').is('.adj')){
-                xiami.addEventListener('canplay',function(){
-                    var musicTime = xiami.duration - r.playTime;
-                    if(xiami.duration > musicTime ){
-                        xiami.currentTime=musicTime;
-                    }else{
-                        console.log('已经播放结束.开始执行下一首歌曲');
-                    }
-                },false);
+            if( mod == 1){
+                if($('body').is('.adj')){
+                    xiami.addEventListener('canplay',function(){
+                        var musicTime = xiami.duration - r.playTime;
+                        if(xiami.duration > musicTime ){
+                            xiami.currentTime=musicTime;
+                        }else{
+                            console.log('已经播放结束.开始执行下一首歌曲');
+                        }
+                    },false);
+                }
             }
-
-            xiami.play();
             xiami.addEventListener('canplay',bufferBar,false);
 
-            //调整播放时间
+			xiami.play();
+
+
+
+			//调整播放时间
             if(!$('body').is('.adj')){
                 $('.progress_bar').mousedown(function(){
                     $('#progress').attr('class','on');
@@ -558,7 +568,6 @@ function wait_sync(){
                 },1000);
             }
 
-            //=============================================调整播放进度条
             function adjustPorgress(dom,ev){
                 var event = window.event || ev;
                 var progressX = event.clientX/$(dom).width()*100;
@@ -587,28 +596,28 @@ function wait_sync(){
 
         //下一曲
         function next(id,Mode){
-          //  var j = {"act":"sync","data":{"playId":"1769821950","playTime":"262","url":"http://127.0.0.1/xiami/1.mp3","title":"Eternal Light","length":"261","cover":"http:\/\/img.xiami.net\/images\/album\/img24\/46824\/3686691384929141.jpg","artist":"Libera","album":"Peace"}};
+            //  var j = {"act":"sync","data":{"playId":"1769821950","playTime":"262","url":"http://127.0.0.1/xiami/1.mp3","title":"Eternal Light","length":"261","cover":"http:\/\/img.xiami.net\/images\/album\/img24\/46824\/3686691384929141.jpg","artist":"Libera","album":"Peace"}};
 
-           // music(j);
+            // music(j);
             /*var mod = 0;
              if(Mode == 1){
-                 var mod = 'song&id';
-                 console.log('获取#标签歌曲');
+             var mod = 'song&id';
+             console.log('获取#标签歌曲');
              }else if(Mode == 2) {
-                 var mod = 'radio&rid';
-                 console.log('获取随机歌曲');
+             var mod = 'radio&rid';
+             console.log('获取随机歌曲');
              }
              $.get('http://itorr.sinaapp.com/fm/x/?a='+mod+'='+id+'&_r=' + Math.random(), function (r) {
-                 if(Mode == 1){
-                     music(r);
-                     console.log(r);
-                 }else if(Mode == 2) {
-                     location.href ='#'+r[1].xid;
-                     console.log(r);
-                 }
+             if(Mode == 1){
+             music(r);
+             console.log(r);
+             }else if(Mode == 2) {
+             location.href ='#'+r[1].xid;
+             console.log(r);
+             }
              });*/
         }
-        //播放结束后执行
+        /*//播放结束后执行
         xiami.addEventListener('ended',function(){
             //$('.play').removeClass('pause');
             //获取下一首歌曲
@@ -620,7 +629,7 @@ function wait_sync(){
                 console.log('自主播放,已经播放结束.开始执行下一首歌曲');
                 next(0,2);
             }
-        },false);
+        },false);*/
         //显示进度时间
         /*        $(".progress_bar").hover(function(){
          $(this).mousemove(function(e) {

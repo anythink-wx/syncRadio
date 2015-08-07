@@ -68,6 +68,7 @@ class Server {
 		$server->on('open', [$this, 'onOpen']);
 		$server->on('message', [$this, 'onMessage']);
 		$server->on('close', [$this, 'onClose']);
+		$server->on('request',[$this,'onRequest']);
 		$server->set([
 			'reactor_num' => 2, //核心数
 			'worker_num' => 20,    //进程数量
@@ -138,6 +139,24 @@ class Server {
 
 		//加载open事件模块
 		$this->event->eventOpen($_server,$request);
+	}
+
+
+	function onRequest(swoole_http_request $request, swoole_http_response $response){
+		$path_info =  $request->server['path_info'];
+		if($path_info == '/'){
+			ob_start();
+			include ROOT.'/public/index.html';
+			$content = ob_get_clean();
+			$response->end($content);
+		}else{
+			$static = ROOT .'/public'. $path_info;
+			if(is_file($static)){
+				$response->end(file_get_contents($static));
+			}else{
+				$response->end();
+			}
+		}
 	}
 
 
