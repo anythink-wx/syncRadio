@@ -129,8 +129,6 @@ class Server {
 
 	function onOpen(swoole_websocket_server $_server, swoole_http_request $request)	{
 
-		echo ' zaixian'.count($_server->connections);
-
 		//判断是否启动播放服务
 		if (kv::online() == 0 && $this->playerFlag == -1) {
 			$this->playerFlag = swoole_timer_tick(1000,[$this,'onPlay']);

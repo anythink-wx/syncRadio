@@ -20,7 +20,8 @@ abstract class baseEvent{
 	 * @param swoole_websocket_server $server 服务worker
 	 */
 	function broadcast($badge,swoole_websocket_server $server){
-		foreach($server->connections as $fd){
+		$user = kv::user();
+		foreach($user as $fd){
 			$server->push($fd,$badge);
 		}
 	}
