@@ -171,7 +171,7 @@ class Server {
 
 		if($play_id !=0){
 			if($play_time > 0){
-				$play_time-=110;
+				$play_time-=1;
 				kv::play_time($play_time);
 				$this->serverLog('正在播放 '.$play_id.'剩余 '.$play_time);
 				if($play_time %10 ==0){
