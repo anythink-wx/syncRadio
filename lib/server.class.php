@@ -27,6 +27,27 @@ class kv {
 	}
 }
 
+
+
+class conf{
+
+    public static $config;
+    function __construct(){
+        if(isset($_SERVER['argv'][1])){
+            if(file_exists(ROOT.'/conf/'. $_SERVER['argv'][1])){
+                self::$config = parse_ini_file(ROOT.'/conf/'. $_SERVER['argv'][1],true);
+            }else{
+                throw new Exception('configure '.$_SERVER['argv'][1].' is not exists');
+            }
+        }else{
+            self::$config = parse_ini_file( ROOT.'/conf/default.ini',true);
+        }
+
+        print_r(self::$config );
+
+    }
+}
+
 class Server {
 
 	public $online = 0; // 在线用户数
@@ -44,21 +65,28 @@ class Server {
 	private $event;
 	private $server;
 	private $process;
+    private $config;
 
 
 	function init(){
 		swoole_set_process_name('syncRadio');
-		$server = new swoole_websocket_server("0.0.0.0", 8810);
-		$server->addlistener('127.0.0.1',8811,SWOOLE_SOCK_TCP);
+
+        new conf();
+        print_r();
+        exit;
+
+        $this->config = $config;
+		$server = new swoole_websocket_server(conf::$config['server']['listen'], conf::$config['server']['port']);
+		$server->addlistener('127.0.0.1',conf::$config['server']['mport'],SWOOLE_SOCK_TCP);
 		$server->on('open', [$this, 'onOpen']);
 		$server->on('message', [$this, 'onMessage']);
 		$server->on('close', [$this, 'onClose']);
 		$server->on('request',[$this,'onRequest']);
 		$server->set([
-			'reactor_num' => 2, //核心数
-			'worker_num' => 20,    //进程数量
-			'backlog' => 128,   //参数将决定最多同时有多少个待accept的连接
-			'max_request' => 2000, //worker进程在处理完n次请求后结束运行。
+			'reactor_num' => conf::$config['server']['reactor_num'],
+			'worker_num' => conf::$config['server']['worker_num'],
+			'backlog' => conf::$config['server']['backlog'],
+			'max_request' => conf::$config['server']['max_request'],
 		]);
 
 
