@@ -72,8 +72,6 @@ class Server {
 		swoole_set_process_name('syncRadio');
 
         new conf();
-        print_r();
-        exit;
 
         $this->config = $config;
 		$server = new swoole_websocket_server(conf::$config['server']['listen'], conf::$config['server']['port']);
