@@ -42,9 +42,6 @@ class conf{
         }else{
             self::$config = parse_ini_file( ROOT.'/conf/default.ini',true);
         }
-
-        print_r(self::$config );
-
     }
 }
 
