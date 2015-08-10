@@ -27,10 +27,9 @@ class playinfo extends baseEvent{
             }else{
 				$server->push($frame->fd,Server::badge('sync','wait')); // 返回等待信息
 			}
-		//添加歌曲
-		}elseif($badge->act == 'add'){
-			$player = new player();
-			//$player->
+		}elseif($badge->act == 'playinfo'){
+			$data = player::getPlayUrl($badge->msg);
+			$server->push($frame->fd,Server::badge('playinfo',$data));
 		}
 
 
