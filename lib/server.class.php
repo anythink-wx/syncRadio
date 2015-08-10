@@ -43,7 +43,7 @@ class conf{
             self::$config = parse_ini_file( ROOT.'/conf/default.ini',true);
         }
 
-        print_r(self::$config );
+       // print_r(self::$config );
 
     }
 }
@@ -85,6 +85,10 @@ class Server {
 			'worker_num' => conf::$config['server']['worker_num'],
 			'backlog' => conf::$config['server']['backlog'],
 			'max_request' => conf::$config['server']['max_request'],
+            'daemonize' => conf::$config['server']['daemonize'],
+            'log_file'  => conf::$config['server']['log_file'],
+            'user' => conf::$config['server']['user'],
+            'group' =>conf::$config['server']['group'],
 		]);
 
 
@@ -132,6 +136,16 @@ class Server {
 		});
 		$server->addProcess($this->process);
 	}
+
+    function __destruct(){
+        $dir = ROOT.'/data/';
+        $list = scandir($dir);
+        foreach($list as $d){
+            if(substr($d,0,1) != '.'){
+                unlink($dir.'/'.$d);
+            }
+        }
+    }
 
 	
 
