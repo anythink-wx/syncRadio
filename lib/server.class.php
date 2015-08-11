@@ -5,6 +5,30 @@
  * Date: 15-8-3
  * Time: 下午6:32
  */
+
+
+class admin{
+
+    function auth(&$request,&$response){
+
+        print_r($request);
+
+        if (!isset($request->header['authorization'])) {
+
+            $response->header('WWW-Authenticate',' Basic realm="Dashboard"');
+            $response->status(401);
+            $response->end( 'Text to send if user hits Cancel button');
+           return false;
+        } else {
+
+           // echo "<p>Hello {$request->header['authorization']}.</p>";
+          //  echo "<p>You entered {$_SERVER['PHP_AUTH_PW']} as your password.</p>";
+        }
+
+
+        return false;
+    }
+}
 class Server {
 
 	public $online = 0; // 在线用户数
@@ -171,11 +195,18 @@ class Server {
 
 	function onRequest(swoole_http_request $request, swoole_http_response $response){
 		$path_info =  $request->server['path_info'];
-		if($path_info == '/'){
-			ob_start();
-			include ROOT.'/public/index.html';
-			$content = ob_get_clean();
-			$response->end($content);
+		if($path_info == '/') {
+            ob_start();
+            include ROOT . '/public/index.html';
+            $content = ob_get_clean();
+            $response->end($content);
+        }else if($path_info == '/admin'){
+            $admin = new admin();
+            if($admin->auth($request,$response)){
+
+            }else{
+                $response->end("auth error");
+            }
 		}else{
 			$static = ROOT .'/public'. $path_info;
 			if(is_file($static)){
