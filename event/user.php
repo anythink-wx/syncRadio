@@ -43,9 +43,9 @@ class user extends  baseEvent{
 			$server->push($frame->fd,Server::badge('online',$online));
 		}elseif($badge->act =='addsong'){
 			$player = new player();
-			$data = player::getPlayUrl((int)$badge->msg);
+			$data = player::getPlayUrl((int)$badge->data);
 			if(!empty($data)){
-				$player->pushMusicList((int)$badge->msg);
+				$player->pushMusicList((int)$badge->data);
 				$response = Server::badge('ok','歌曲添加成功');
 			}else{
 				$response = Server::badge('error','歌曲不存在');

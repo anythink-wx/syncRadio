@@ -28,7 +28,7 @@ class playinfo extends baseEvent{
 				$server->push($frame->fd,Server::badge('sync','wait')); // 返回等待信息
 			}
 		}elseif($badge->act == 'playinfo'){
-			$data = player::getPlayUrl(trim($badge->msg));
+			$data = player::getPlayUrl(trim($badge->data));
 			$server->push($frame->fd,Server::badge('playinfo',$data));
 		}
 

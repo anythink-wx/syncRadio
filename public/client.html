@@ -19,7 +19,7 @@
 		}
 
 		function connect_websocket(){
-			var wsServer = 'ws://127.0.0.1:8810';
+			var wsServer = 'ws://123.59.65.195:8810';
 			ws = new WebSocket(wsServer);
 
 
@@ -50,7 +50,7 @@
 				console.log("onerror");
 			};
 			$('#send').click(function(){
-				arrayObj = {"act":$('#act').val() ,"msg": $('#msg').val()};
+				arrayObj = {"act":$('#act').val() ,"data": $('#msg').val()};
 				ws.send(JSON.stringify(arrayObj));
 			});
 		}
