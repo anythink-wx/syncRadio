@@ -42,6 +42,8 @@
             $('#status').html("有" + res.data + "人与您共同聆听");
         } else if (res.act == 'playinfo') {
             music(res.data, 0);
+        } else if (res.act == 'ok' || res.act == 'error') {
+            alert(res.data);
         } else {
             console.log(res.data);
         }

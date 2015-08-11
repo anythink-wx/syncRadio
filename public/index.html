@@ -16,6 +16,7 @@
 <div class="container">
     <div class="main">
         <div id="status">尚未链接服务器</div>
+
         <audio id="xiami" src="" title="小镇播放器" style="display: none"></audio>
         <button class="play" style="display: none"></button>
 
@@ -29,9 +30,11 @@
         <div class="name"></div>
         <div class="artist">演唱者：<span></span></div>
         <div class="album_name">专辑：<span></span></div>
+		<div class="album_name"><input type="text" id="xiami_id" placeholder="输入虾米ID点歌"><input type="button" value="好" id="addSong"></div>
 
 
-        <div class="Volume-box">
+
+		<div class="Volume-box">
             <button class="Volume on"></button>
             <input id="range" type="range" min="0" max="100" value="50">
         </div>
@@ -45,7 +48,7 @@
         <div class="list">
             <h5>播放列表</h5>
             <ul>
-                <li><a href="#">播放电台</a></li>
+                <li><a href="#">同步电台 - 播放同步电台</a></li>
                 <li><a href="#1769817357">星色夜空 - 藤宫ゆき</a></li>
                 <li><a href="#1771226908">SEE YOU - 松下優也</a></li>
                 <li><a href="#1773945663">Season - 瀧川ありさ</a></li>
@@ -69,6 +72,14 @@
             console.log('获取到id,点播模式已启动');
         }
     FastClick.attach(document.body);
+
+		$('#addSong').click(function(){
+			xia_id = $('#xiami_id').val();
+			if(xia_id != ''){
+				ws.send('{"act":"addsong","data":' + xia_id + '}');
+				$('#xiami_id').val("");
+			}
+		});
     });
 </script>
 <script src="./static/js/music.js"></script>
