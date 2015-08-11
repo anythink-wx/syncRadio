@@ -59,13 +59,14 @@
 
 
 <script type="text/javascript">
+	var wsServer = 'ws://127.0.0.1:8810';
     $(document).ready(function () {
         if(location.hash.substring(1) == '') {
             $('body').addClass('adj');
-            console.log('没有找到播放ID.开始同步播放');
+            console.log('直播模式已启动');
         }else{
             $('body').removeClass('adj');
-            console.log('获取到id,点播模式');
+            console.log('获取到id,点播模式已启动');
         }
     FastClick.attach(document.body);
     });

@@ -5,47 +5,6 @@
  * Date: 15-8-3
  * Time: 下午6:32
  */
-
-
-class kv {
-	public static function __callStatic($name, $arguments)	{
-		if(empty($arguments)){
-			return self::shareGet($name);
-		}else{
-			return self::sharePut($name,$arguments[0]);
-		}
-	}
-
-	static function sharePut($k,$v){
-		$file = ROOT.'/data/'.$k;
-		file_put_contents($file,serialize($v),LOCK_EX);
-	}
-
-	static function shareGet($k){
-		$file = ROOT.'/data/'.$k;
-		return unserialize(file_get_contents($file));
-	}
-}
-
-
-
-class conf{
-
-    public static $config;
-    function __construct(){
-        if(isset($_SERVER['argv'][1])){
-            if(file_exists(ROOT.'/conf/'. $_SERVER['argv'][1])){
-                self::$config = parse_ini_file(ROOT.'/conf/'. $_SERVER['argv'][1],true);
-            }else{
-                throw new Exception('configure '.$_SERVER['argv'][1].' is not exists');
-            }
-        }else{
-            self::$config = parse_ini_file( ROOT.'/conf/default.ini',true);
-        }
-
-    }
-}
-
 class Server {
 
 	public $online = 0; // 在线用户数
@@ -63,22 +22,17 @@ class Server {
 	private $event;
 	private $server;
 	private $process;
-    private $config;
-
 
 	function init(){
+		$this->clearRunTimeFile();
 		swoole_set_process_name('syncRadio');
-
         new conf();
-
-        $this->config = $config;
 		$server = new swoole_websocket_server(conf::$config['server']['listen'], conf::$config['server']['port']);
 		$server->addlistener('127.0.0.1',conf::$config['server']['mport'],SWOOLE_SOCK_TCP);
 		$server->on('open', [$this, 'onOpen']);
 		$server->on('message', [$this, 'onMessage']);
 		$server->on('close', [$this, 'onClose']);
 		$server->on('request',[$this,'onRequest']);
-        $server->on('shutdown',[$this,'onShutdown']);
         $server->on('start',[$this,'onStart']);
 		$server->set([
 			'reactor_num' => conf::$config['server']['reactor_num'],
@@ -143,11 +97,12 @@ class Server {
 
     }
 
-    function onShutdown(){
+    private function clearRunTimeFile(){
         $dir = ROOT.'/data/';
         $list = scandir($dir);
         foreach($list as $d){
             if(substr($d,0,1) != '.'){
+				echo $dir.'/'.$d.PHP_EOL;
                 unlink($dir.'/'.$d);
             }
         }
@@ -224,8 +179,16 @@ class Server {
 		}else{
 			$static = ROOT .'/public'. $path_info;
 			if(is_file($static)){
-				$response->header('Last-Modified',date('D, d M Y H:i:s', filemtime($static)) .' GMT');
-				$response->end(file_get_contents($static));
+				$lastModified = date('D, d M Y H:i:s', filemtime($static)) .' GMT';
+				if(isset($request->header['if-modified-since']) &&
+					$request->header['if-modified-since']== $lastModified){
+					$response->status(304);
+					$response->end();
+				}else{
+					$response->header("Content-Type",mime_content($static));
+					$response->header('Last-Modified', $lastModified);
+					$response->end(file_get_contents($static));
+				}
 			}else{
 				$response->end();
 			}

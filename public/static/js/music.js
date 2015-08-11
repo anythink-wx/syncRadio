@@ -1,51 +1,48 @@
-﻿function wait_sync(){
-}
-$(document).ready(function(){
+﻿$(document).ready(function () {
     // var wsServer = 'ws://127.0.0.1:8810';
-    var wsServer = 'ws://123.59.65.195:8810';
+
     ws = new WebSocket(wsServer);
     ws.onopen = function (evt) {
-        if(location.hash.substring(1) == '') {
+        if (location.hash.substring(1) == '') {
             ws.send('{"act":"sync"}');
-        }else{
+        } else {
             $('body').removeClass('adj');
-            ws.send('{"act":"playinfo","data":'+location.hash.substring(1)+'}');
+            ws.send('{"act":"playinfo","data":' + location.hash.substring(1) + '}');
             console.log('获取到id,点播模式');
         }
-
     };
     ws.onclose = function (evt) {
         $('#status').html('已断开与服务器的链接');
     };
     ws.onmessage = function (evt) {
         console.log(evt.data);
-        var res = eval('('+evt.data+')');
-        if(res.act == 'sync'){
-            if(res.data == 'wait'){
+        var res = eval('(' + evt.data + ')');
+        if (res.act == 'sync') {
+            if (res.data == 'wait') {
                 //
                 console.log('等2秒再发送同步信息');
-                setTimeout(2000,function(){
+                setTimeout(2000, function () {
                     ws.send('{"act":"sync"}');
                 });
-            }else{
-                console.log('播放ID:'+res.data.playId);
-                console.log('播放偏移:'+res.data.playTime);
-                console.log('播放地址:'+res.data.url);
+            } else {
+                console.log('播放ID:' + res.data.playId);
+                console.log('播放偏移:' + res.data.playTime);
+                console.log('播放地址:' + res.data.url);
                 //music(res.data,1);
             }
             console.log('开始播放');
-            if($('body').is('.first')) {
-                music(res.data,1);
-            }else {
-                music(res.data,0);
+            if ($('body').is('.first')) {
+                music(res.data, 1);
+            } else {
+                music(res.data, 0);
             }
 
-        }else if(res.act =='online'){
-            console.log('在线人数:'+res.data);
-            $('#status').html("有"+res.data+"人与您共同聆听");
-        }else if(res.act =='playinfo'){
-            music(res.data,0);
-        }else{
+        } else if (res.act == 'online') {
+            console.log('在线人数:' + res.data);
+            $('#status').html("有" + res.data + "人与您共同聆听");
+        } else if (res.act == 'playinfo') {
+            music(res.data, 0);
+        } else {
             console.log(res.data);
         }
     };
@@ -64,157 +61,143 @@ $(document).ready(function(){
      };*/
     var xiami = document.getElementById("xiami");
     //播放结束后执行
-    xiami.addEventListener('ended',function(){
+    xiami.addEventListener('ended', function () {
         //获取下一首歌曲
-        if($('body').is('.adj')){
+        if ($('body').is('.adj')) {
             $('body').removeClass('first');
             console.log('电台播放,已经播放结束.发送同步');
             ws.send('{"act":"sync"}');
-        }else{
+        } else {
             console.log('自主播放,已经播放结束.开始执行下一首歌曲');
             ws.send('{"act":"sync"}');
         }
-    },false);
+    }, false);
 
 //开始执行的内容
 
-    xiami.addEventListener('canplay',bufferBar,false);
-    function bufferBar(){
+
+    xiami.addEventListener('canplay', bufferBar, false);
+    function bufferBar() {
         //===============================================显示缓冲进度条
-        bufferTimer = setInterval(function(){
+        bufferTimer = setInterval(function () {
             var bufferIndex = xiami.buffered.length;
             if (bufferIndex > 0 && xiami.buffered != undefined) {
-                var bufferValue = xiami.buffered.end(bufferIndex-1)/xiami.duration*100;
-                $('.buffer').css('width' , bufferValue+'%');
+                var bufferValue = xiami.buffered.end(bufferIndex - 1) / xiami.duration * 100;
+                $('.buffer').css('width', bufferValue + '%');
 
-                if (Math.abs(xiami.duration - xiami.buffered.end(bufferIndex-1)) <1) {
-                    $('.buffer').css('width' , 100+'%');
+                if (Math.abs(xiami.duration - xiami.buffered.end(bufferIndex - 1)) < 1) {
+                    $('.buffer').css('width', 100 + '%');
                     clearInterval(bufferTimer);
                 }
             }
-        },1000);
+        }, 1000);
 
     }
-    function music(r,mod){
+
+    function music(r, mod) {
+        var can_play = 0;
         //var j = {"act":"sync","data":{"playId":"1769821950","playTime":"262","url":"http://127.0.0.1/xiami/1.mp3","title":"Eternal Light","length":"261","cover":"http:\/\/img.xiami.net\/images\/album\/img24\/46824\/3686691384929141.jpg","artist":"Libera","album":"Peace"}};
         //var A = new Audio();
         //A.src = _u(r[0].mp3);
-        $('#xiami').attr({'src': r.url,'title':r.title});
+        console.log('call function music');
+        $('#xiami').attr({'src': r.url, 'title': r.title});
         $('.name').text(r.title);
         $('.album_name span').text(r.title);
         $('.artist span').text(r.artist);
-        $('.Cover').css('background-image','url('+r.cover+')');
-        $('.Cover-2').css('background-image','url('+r.cover+')');
-        if( mod == 1){
-            if($('body').is('.adj')){
-                xiami.currentTime=r.length - r.playTime;
+        $('.Cover').css('background-image', 'url(' + r.cover + ')');
+        $('.Cover-2').css('background-image', 'url(' + r.cover + ')');
+        if (mod == 1) {
+            if ($('body').is('.adj')) {
+                xiami.addEventListener('canplay', function () {
+                    if (can_play == 0) {
+                        console.log('快进到与服务器同步位置:' + r.playTime);
+                        xiami.currentTime = r.length - r.playTime;
+                        can_play = 1;
+                    }
+                    return true;
+                });
             }
         }
         xiami.play();
-        console.log('当前music的MOD编号:'+mod);
+        console.log('当前正在播放');
     }
 
+
     //调整播放时间
-    if(!$('body').is('.adj')){
-        $('.progress_bar').mousedown(function(){
-            $('#progress').attr('class','on');
+    if (!$('body').is('.adj')) {
+        $('.progress_bar').mousedown(function () {
+            $('#progress').attr('class', 'on');
             $('.time').removeClass('on');
-            $(window).mousemove(function(e){
-                $('#progress.on').css('width' , e.pageX+'px');
+            $(window).mousemove(function (e) {
+                $('#progress.on').css('width', e.pageX + 'px');
                 var surplus = xiami.duration;
                 var xx = e.pageX;
                 var w = $(document).width();
-                var progressValue = surplus*(xx/w);
-                var surplusMin = parseInt(progressValue/60);
-                var surplusSecond = parseInt(progressValue%60);
-                if (surplusSecond < 10 ) {
-                    surplusSecond = '0'+surplusSecond;
+                var progressValue = surplus * (xx / w);
+                var surplusMin = parseInt(progressValue / 60);
+                var surplusSecond = parseInt(progressValue % 60);
+                if (surplusSecond < 10) {
+                    surplusSecond = '0' + surplusSecond;
                 }
-                $('.time').text(surplusMin + ":" +surplusSecond);
-            }).mouseup(function(ev){
-                $('#progress').attr('class','move');
-                adjustPorgress(this,ev);
+                $('.time').text(surplusMin + ":" + surplusSecond);
+            }).mouseup(function (ev) {
+                $('#progress').attr('class', 'move');
+                adjustPorgress(this, ev);
                 $(window).unbind('mousemove').unbind('mouseup');
                 $('.time').addClass('on');
                 xiami.play();
             });
-            document.body.onselectstart = document.body.ondrag = function(){
+            document.body.onselectstart = document.body.ondrag = function () {
                 return false;
             }
         });
     }
 
     //创建进度条和剩余时间
-    xiami.addEventListener('timeupdate',function(){
+    xiami.addEventListener('timeupdate', function () {
         if (!isNaN(xiami.duration)) {
             //剩余时间
             var surplus = xiami.currentTime;
-            var surplusMin = parseInt(surplus/60);
-            var surplusSecond = parseInt(surplus%60);
-            if (surplusSecond < 10 ) {
-                surplusSecond = '0'+surplusSecond;
-            };
-            $('.time.on').text(surplusMin + ":" +surplusSecond);
+            var surplusMin = parseInt(surplus / 60);
+            var surplusSecond = parseInt(surplus % 60);
+            if (surplusSecond < 10) {
+                surplusSecond = '0' + surplusSecond;
+            }
+            ;
+            $('.time.on').text(surplusMin + ":" + surplusSecond);
 
             //播放进度条//currentTime当前播放//duration总秒数
-            var progressValue = xiami.currentTime/xiami.duration*100;
-            $('#progress.move').css('width' , progressValue + '%');
-        };
-    },false);
+            var progressValue = xiami.currentTime / xiami.duration * 100;
+            $('#progress.move').css('width', progressValue + '%');
+        }
+        ;
+    }, false);
 
 
-    function adjustPorgress(dom,ev){
+    function adjustPorgress(dom, ev) {
         var event = window.event || ev;
-        var progressX = event.clientX/$(dom).width()*100;
-        xiami.currentTime = parseInt(xiami.duration/100*progressX);
-        xiami.removeEventListener('canplay',bufferBar,false);
+        var progressX = event.clientX / $(dom).width() * 100;
+        xiami.currentTime = parseInt(xiami.duration / 100 * progressX);
+        xiami.removeEventListener('canplay', bufferBar, false);
     }
 
 
-
-    /*//播放结束后执行
-     xiami.addEventListener('ended',function(){
-     //$('.play').removeClass('pause');
-     //获取下一首歌曲
-     if($('body').is('.adj')){
-     setInterval (function(){
-     console.log('电台播放,已经播放结束.开始执行下一首歌曲');
-     }, 1000);
-     }else{
-     console.log('自主播放,已经播放结束.开始执行下一首歌曲');
-     next(0,2);
-     }
-     },false);*/
-    //显示进度时间
-    /*        $(".progress_bar").hover(function(){
-     $(this).mousemove(function(e) {
-     var surplus = xiami.duration;
-     var xx = e.pageX;
-     var w = $(document).width();
-     var progressValue = surplus*(xx/w);
-     var surplusMin = parseInt(progressValue/60);
-     var surplusSecond = parseInt(progressValue%60);
-     console.log(surplusMin+':'+surplusSecond);
-     });
-     },function(){
-     });*/
-
-    (function() {
+    (function () {
         if ('onhashchange' in window) {
             //if browser support onhaschange  如果浏览器支持onhaschange事件
             if (window.addEventListener) {
-                window.addHashChange = function(func, before) {
+                window.addHashChange = function (func, before) {
                     window.addEventListener('hashchange', func, before);
                 };
-                window.removeHashChange = function(func) {
+                window.removeHashChange = function (func) {
                     window.removeEventListener('hashchange', func);
                 };
                 return;
             } else if (window.attachEvent) {
-                window.addHashChange = function(func) {
+                window.addHashChange = function (func) {
                     window.attachEvent('onhashchange', func);
                 };
-                window.removeHashChange = function(func) {
+                window.removeHashChange = function (func) {
                     window.detachEvent('onhashchange', func);
                 };
                 return;
@@ -223,89 +206,89 @@ $(document).ready(function(){
         //if the browser not support onhaschange 如果不支持的话
         var hashChangeFuncs = [];
         var oldHref = location.href;
-        window.addHashChange = function(func, before) {
-            if ( typeof func === 'function')
-                hashChangeFuncs[before ? 'unshift': 'push' ](func);
+        window.addHashChange = function (func, before) {
+            if (typeof func === 'function')
+                hashChangeFuncs[before ? 'unshift' : 'push'](func);
         };
-        window.removeHashChange = function(func) {
+        window.removeHashChange = function (func) {
             for (var i = hashChangeFuncs.length - 1; i >= 0; i--)
                 if (hashChangeFuncs[i] === func)
                     hashChangeFuncs.splice(i, 1);
         };
         //!!inportant!! 用setInterval检测has的改变
-        setInterval(function() {
+        setInterval(function () {
             var newHref = location.href;
             if (oldHref !== newHref) {
                 oldHref = newHref;
                 for (var i = 0; i < hashChangeFuncs.length; i++) {
                     hashChangeFuncs[i].call(window, {
-                        'type' : 'hashchange',
-                        'newURL' : newHref,
-                        'oldURL' : oldHref
+                        'type': 'hashchange',
+                        'newURL': newHref,
+                        'oldURL': oldHref
                     });
                 }
             }
         }, 100);
     })();
     // Usage, infinitely many times: 使用方法
-    addHashChange(function(e) {
-        if(location.hash.substring(1) == '') {
+    addHashChange(function (e) {
+        if (location.hash.substring(1) == '') {
             $('body').addClass('adj first');
             console.log('没有找到播放ID.开始同步播放');
             ws.send('{"act":"sync"}');
-        }else{
+        } else {
             $('body').removeClass('adj first');
-            ws.send('{"act":"playinfo","data":"'+location.hash.substring(1)+'"}');
+            ws.send('{"act":"playinfo","data":"' + location.hash.substring(1) + '"}');
             console.log('获取到id,点播模式');
         }
     });
     //播放按钮
-    $('.play').click(function(){
+    $('.play').click(function () {
         $(this).toggleClass('pause');
         if (!$(this).hasClass("pause")) {
             xiami.pause();
-        }else {
+        } else {
             xiami.play();
         }
     });
     //音量调节
-    $('#range').mousedown(function(){
-        $(this).mousemove(function(){
-            if(!$('.Volume').is('.off')){
-                var a = xiami.volume=$(this).val()/100;
-                console.log(xiami.volume=$(this).val()/100);
+    $('#range').mousedown(function () {
+        $(this).mousemove(function () {
+            if (!$('.Volume').is('.off')) {
+                var a = xiami.volume = $(this).val() / 100;
+                console.log(xiami.volume = $(this).val() / 100);
                 $.cookie('the_range', a);
             }
         });
     });
-    $('.Volume').click(function(){
-        if(!$('.Volume').is('.off')){
-            xiami.volume=0;
+    $('.Volume').click(function () {
+        if (!$('.Volume').is('.off')) {
+            xiami.volume = 0;
             $(this).removeClass('on').addClass('off');
-        }else{
+        } else {
             $(this).removeClass('off').addClass('on');
-            xiami.volume=$('#range').val()/100;
+            xiami.volume = $('#range').val() / 100;
         }
     });
-    $(".Volume.on").click(function(){
+    $(".Volume.on").click(function () {
         console.log('321');
     });
-    $(".Volume.off").click(function(){
+    $(".Volume.off").click(function () {
         console.log('123');
     });
-    if($.cookie('the_range') != null){
+    if ($.cookie('the_range') != null) {
         var a = $.cookie('the_range');
-        xiami.volume=a;
-        $('#range').val(a*100);
-    }else{
-        xiami.volume=0.5;
+        xiami.volume = a;
+        $('#range').val(a * 100);
+    } else {
+        xiami.volume = 0.5;
     }
     //右侧列表
-    $('.list-btn').click(function(){
+    $('.list-btn').click(function () {
         var t = $(".main");
         if (t.attr('style') == null) {
-            t.css({'-webkit-transform': 'translateX(-300px)','transform': 'translateX(-300px)'});
-        }else {
+            t.css({'-webkit-transform': 'translateX(-300px)', 'transform': 'translateX(-300px)'});
+        } else {
             t.removeAttr('style');
         }
     });
