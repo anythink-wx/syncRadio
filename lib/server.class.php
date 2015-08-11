@@ -165,7 +165,7 @@ class Server {
 
 		}else{
 			kv::play_time(0);
-			$this->serverLog('当前曲目播放完毕 '.$this->playId);
+			$this->serverLog('当前曲目播放完毕 '.$play_id);
 		}
 	}
 
