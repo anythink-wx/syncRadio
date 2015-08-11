@@ -1,0 +1,25 @@
+@media (max-width: 768px){
+    .Cover-1 {
+        width: 276px;
+        height: 276px;
+        top: -165px;
+        left: 50%;
+        margin-left: -138px;
+        border: 1px solid #a2a2ae;
+        padding: 2px;
+    }
+    .Cover-2 {
+        width: 270px;
+        height: 270px;
+    }
+    .Cover-1:before {
+        width: 100px;
+        height: 100px;
+        background-size: 100px;
+        margin: -50px 0 0 -50px;
+    }
+    .Volume-box ,
+    .list-btn {
+        display: block;
+    }
+}
