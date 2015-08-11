@@ -23,7 +23,12 @@ class kv {
 
 	static function shareGet($k){
 		$file = ROOT.'/data/'.$k;
-		return unserialize(file_get_contents($file));
+		if(file_exists($file)){
+			return unserialize(file_get_contents($file));
+		}else{
+			return false;
+		}
+
 	}
 }
 
@@ -42,6 +47,25 @@ class conf{
         }
 
     }
+}
+
+
+class limit{
+	static function verify($key,$time){
+		$res = kv::shareGet($key);
+		if($res){
+			if($res + $time > time()){
+				return false;
+			}else{
+				return true;
+			}
+		}
+		return true;
+	}
+
+	static function keep($key){
+		kv::sharePut($key,time());
+	}
 }
 
 

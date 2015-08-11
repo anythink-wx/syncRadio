@@ -79,8 +79,8 @@ class Server {
 						echo '重置播放列表'.PHP_EOL;
 					}
 				}elseif(kv::play_time() >=5 and kv::play_time() <=10){
-                    //
-                    $id = $player->list[0];
+
+					$id = $player->shiftMusicList(true);
                     $data = player::getPlayUrl($id);
                     echo '预下载'.$id.PHP_EOL;
                     sleep(6);

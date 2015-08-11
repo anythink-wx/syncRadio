@@ -42,15 +42,23 @@ class user extends  baseEvent{
 			$online = count($server->connections);
 			$server->push($frame->fd,Server::badge('online',$online));
 		}elseif($badge->act =='addsong'){
-			$player = new player();
-			$data = player::getPlayUrl((int)$badge->data);
-			if(!empty($data)){
-				$player->pushMusicList((int)$badge->data);
-				$response = Server::badge('ok','歌曲添加成功');
+			$rate = conf::$config['song']['add_song_rate'];
+
+			if(limit::verify('add_song_'.$frame->fd,$rate)){
+				echo '点歌频次限制'.$rate.PHP_EOL;
+				$player = new player();
+				$data = player::getPlayUrl((int)$badge->data);
+				if(!empty($data)){
+					$player->pushMusicList((int)$badge->data);
+					$response = Server::badge('ok','歌曲添加成功');
+				}else{
+					$response = Server::badge('error','歌曲不存在');
+				}
+				limit::keep('add_song_'.$frame->fd,$rate);
+				$server->push($frame->fd,$response);
 			}else{
-				$response = Server::badge('error','歌曲不存在');
+				$server->push($frame->fd,Server::badge('error','操作太频繁啦'));
 			}
-			$server->push($frame->fd,$response);
 		}
 	}
 

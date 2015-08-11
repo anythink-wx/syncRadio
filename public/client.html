@@ -5,8 +5,8 @@
 	<meta HTTP-EQUIV="Content-Type" CONTENT="text/html; CHARSET=utf-8">
 	<meta name="viewport" id="viewport">
 	<title>薔薇花園</title>
-	<script src="static/jquery.js"></script>
-	<script src="static/json2.js"></script>
+	<script src="static/js/jquery-1.11.1.min.js"></script>
+	<script src="static/js/json2.js"></script>
 
 	<script>
 
@@ -19,7 +19,8 @@
 		}
 
 		function connect_websocket(){
-			var wsServer = 'ws://123.59.65.195:8810';
+			var wsServer = 'ws://127.0.0.1:8810';
+			//var wsServer = 'ws://123.59.65.195:8810';
 			ws = new WebSocket(wsServer);
 
 

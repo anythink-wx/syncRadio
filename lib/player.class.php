@@ -99,7 +99,7 @@ class player{
 	 * 取出播放列表中的第一首歌
 	 * @return string
 	 */
-	function shiftMusicList(){
+	function shiftMusicList($preLoad=false){
 		new conf();
 		$random = conf::$config['play']['random'];
 		if($random){
@@ -112,6 +112,10 @@ class player{
 			}
 		}else{
 			$music = array_shift($this->list);
+		}
+
+		if($preLoad){
+			array_unshift($this->list,$music);
 		}
 		if(!$music) return false;
 		return $music;
