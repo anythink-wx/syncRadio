@@ -250,11 +250,11 @@ $(document).ready(function(){
     // Usage, infinitely many times: 使用方法
     addHashChange(function(e) {
         if(location.hash.substring(1) == '') {
-            $('body').addClass('adj');
+            $('body').addClass('adj first');
             console.log('没有找到播放ID.开始同步播放');
             ws.send('{"act":"sync"}');
         }else{
-            $('body').removeClass('adj');
+            $('body').removeClass('adj first');
             ws.send('{"act":"playinfo","data":"'+location.hash.substring(1)+'"}');
             console.log('获取到id,点播模式');
         }
@@ -269,14 +269,16 @@ $(document).ready(function(){
         }
     });
     //音量调节
-    $('#range').change(function(){
-        if(!$('.Volume').is('.off')){
-            var a = xiami.volume=$(this).val()/100;
-            console.log(xiami.volume=$(this).val()/100);
-            $.cookie('the_range', a);
-        }
+    $('#range').mousedown(function(){
+        $(this).mousemove(function(){
+            if(!$('.Volume').is('.off')){
+                var a = xiami.volume=$(this).val()/100;
+                console.log(xiami.volume=$(this).val()/100);
+                $.cookie('the_range', a);
+            }
+        });
     });
-    $('.Volume').change(function(){
+    $('.Volume').click(function(){
         if(!$('.Volume').is('.off')){
             xiami.volume=0;
             $(this).removeClass('on').addClass('off');
