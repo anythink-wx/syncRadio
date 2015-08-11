@@ -78,6 +78,8 @@ class Server {
 		$server->on('message', [$this, 'onMessage']);
 		$server->on('close', [$this, 'onClose']);
 		$server->on('request',[$this,'onRequest']);
+        $server->on('shutdown',[$this,'onShutdown']);
+        $server->on('start',[$this,'onStart']);
 		$server->set([
 			'reactor_num' => conf::$config['server']['reactor_num'],
 			'worker_num' => conf::$config['server']['worker_num'],
@@ -135,7 +137,13 @@ class Server {
 		$server->addProcess($this->process);
 	}
 
-    function __destruct(){
+    function onStart(swoole_server $server){
+        kv::pid(0);
+        kv::pid($server->manager_pid);
+
+    }
+
+    function onShutdown(){
         $dir = ROOT.'/data/';
         $list = scandir($dir);
         foreach($list as $d){

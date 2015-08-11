@@ -29,7 +29,7 @@ class playinfo extends baseEvent{
 			}
 		}elseif($badge->act == 'playinfo'){
 			$data = player::getPlayUrl($badge->msg);
-			$server->push($frame->fd,Server::badge('playinfo',$data));
+			$server->push($frame->fd,Server::badge('playinfo',trim($data)));
 		}
 
 
