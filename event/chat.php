@@ -20,7 +20,6 @@ class chat extends  baseEvent{
 
 	function message(swoole_websocket_server $server,$frame){
         $badge = Server::badgeDecode($frame->data);
-        print_r($badge);
         if($badge->act == 'say'){
             $ip = $server->connection_info($frame->fd)['remote_ip'];
             $msg = $ip ." 说:" . $badge->msg;

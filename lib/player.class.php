@@ -100,7 +100,19 @@ class player{
 	 * @return string
 	 */
 	function shiftMusicList(){
-		$music = array_shift($this->list);
+		new conf();
+		$random = conf::$config['play']['random'];
+		if($random){
+			$id = array_rand($this->list,1);
+			if($id){
+				$music = $this->list[$id];
+				unset($this->list[$id]);
+				echo '抽取随机歌曲'.$music.PHP_EOL;
+				echo '曲库剩余:'.count($this->list).PHP_EOL;
+			}
+		}else{
+			$music = array_shift($this->list);
+		}
 		if(!$music) return false;
 		return $music;
 	}
