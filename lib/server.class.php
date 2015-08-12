@@ -79,11 +79,11 @@ class Server {
 		kv::play_id(0); //当前播放数
 		kv::play_time(0); //剩余时间
 
-		$this->process = new swoole_process(function(swoole_process $worker){
+		$this->process = new swoole_process(function(swoole_process $worker) {
 			$play_id = 0;
 			$playTime = 0;
 			swoole_set_process_name("syncRadio : player");
-			$player = new player();
+			$player = $this->player;
 			$id = $player->shiftMusicList();
 			$data = player::getPlayUrl($id);
 			while(true){

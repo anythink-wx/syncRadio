@@ -20,7 +20,7 @@ class player{
 	public $timeList = [];
 
 
-	private $playList = 'default.txt';
+	public $playList = 'default.txt';
 	private $dataPath;
 	private $timerId=null;
 	private $processList=[];
@@ -42,6 +42,7 @@ class player{
 	 * 获取播放列表
 	 */
 	public function loadMusicList($playList=''){
+		$this->playList = $playList;
 		if(!$playList){
 			$playList = conf::$config['play']['default'];
 			$this->playList = $playList;
@@ -50,23 +51,27 @@ class player{
 
 		$list = $contents = "";
 		$file =  ROOT.'/list/'.$this->playList;
+		echo $file.PHP_EOL;
 		if(!file_exists($file)){
 			file_put_contents($file,"");
 		}else{
 			$contents = file_get_contents($file);
 		}
 		$_list = explode("\r\n",$contents);
+		echo '行数:'.count($_list).PHP_EOL;
 		$list = [];
 		foreach($_list as $d) $list[$d] = $d;
-		self::$list = $list;
+		player::$list = [];
+		player::$list = $list;
+		print_r(player::$list);
 	}
 
 
 	function pushMusicList($id){
 		//如果没有list，则初始化music列表
-		if(!self::$list) $this->loadMusicList();
-		self::$list[$id] = $id;
-		$string = implode("\r\n",self::$list);
+		if(!player::$list) $this->loadMusicList();
+		player::$list[$id] = $id;
+		$string = implode("\r\n",player::$list);
 		$file =  ROOT.'/list/'.$this->playList;
 		file_put_contents($file,$string);
 	}
@@ -83,7 +88,7 @@ class player{
 		if(file_exists($xml_info) && (filectime($xml_info) + 21600 > time())){
 			$source = file_get_contents($xml_info);
 		}else{
-			$source = self::getCurl($uri);
+			$source = player::getCurl($uri);
 			file_put_contents($xml_info,$source,LOCK_EX);
 		}
 
@@ -91,7 +96,7 @@ class player{
 
 		if(is_object($argv)){
 			$data = [
-				'url' => self::de_Location($argv->trackList->track->location),
+				'url' => player::de_Location($argv->trackList->track->location),
 				'title' => (string)  $argv->trackList->track->title,
 				'length' =>(string)  $argv->trackList->track->length,
 				'cover' => (string)  $argv->trackList->track->album_pic,
@@ -110,19 +115,19 @@ class player{
 		new conf();
 		$random = conf::$config['play']['random'];
 		if($random){
-			$id = array_rand(self::$list,1);
+			$id = array_rand(player::$list,1);
 			if($id){
-				$playId = self::$list[$id];
-				unset(self::$list[$id]); //从队列中移除
+				$playId = player::$list[$id];
+				unset(player::$list[$id]); //从队列中移除
 				echo '抽取随机歌曲'.$playId.PHP_EOL;
-				echo '曲库剩余:'.count(self::$list).PHP_EOL;
+				echo '曲库剩余:'.count(player::$list).PHP_EOL;
 			}
 		}else{
-			$playId = array_shift(self::$list);
+			$playId = array_shift(player::$list);
 		}
 
 		if($preLoad){
-			array_unshift(self::$list,$playId);
+			array_unshift(player::$list,$playId);
 
 		}
 		if(!$playId) return false;
@@ -141,116 +146,6 @@ class player{
 			$this->timeList[$id] = $time;
 		}
 	}
-
-
-	function pmp3($id,$filePath){
-		echo 'pmp3',PHP_EOL;
-		$self = $this;
-		$process = new swoole_process(function (swoole_process $worker) use ($id) {
-			$data = self::getPlayUrl($id);
-			$this->timeList[$id] = $data['length'];
-		});
-		if($pid = $process->start()){
-			$this->processList[$pid]=$pid;
-			if(null===$this->timerId){
-				$id=swoole_timer_tick(1000,function ($id){
-					$res=swoole_process::wait(false);
-					unset($this->processList[$res['pid']]);
-					if(empty($this->processList)){
-						swoole_timer_clear($id);
-						$this->timerId=null;
-					}
-				});
-				$this->timerId=$id;
-			}
-		}
-	}
-
-	function processLoadMp3($id){
-		echo 'create_process'.PHP_EOL;
-		$that = $this;
-		$process = new swoole_process(function (swoole_process $worker) use ($id) {
-			$data = $that::getPlayUrl($id);
-			if(!empty($data)){
-				$this->timeList[$id] = $data['length'];
-			}
-			var_dump($data);
-		}, true);
-		if($pid = $process->start()){
-			$this->processList[$pid]=$pid;
-			if(null===$this->timerId){
-				$id=swoole_timer_tick(1000,function ($id){
-					$res=swoole_process::wait(false);
-					unset($this->processList[$res['pid']]);
-					if(empty($this->processList)){
-						swoole_timer_clear($id);
-						$this->timerId=null;
-					}
-				});
-				$this->timerId=$id;
-			}
-		}
-	}
-
-	function downloadMp3($id,$filePath){
-		$process = new swoole_process(function (swoole_process $worker) use ($id,$filePath) {
-			$xiamiUrl = 'http://www.xiami.com/song/playlist/id/' . $id;
-			echo '开始获取播放信息：' . $xiamiUrl . PHP_EOL;
-			$source = self::getCurl($xiamiUrl);
-			if(!$source){
-				return false;
-			}
-			$argv = simplexml_load_string($source, 'SimpleXMLElement', LIBXML_NOCDATA);
-			$mp3 = self::de_Location($argv->trackList->track->location);
-			echo '开始缓冲',PHP_EOL;
-			list($length,$bin) = $this->getStream($mp3);
-
-			$tmp=sys_get_temp_dir().'/'.uniqid();
-			file_put_contents($tmp, $bin);
-			$mp3obj = new mp3file($tmp,$length);
-
-			$time=$mp3obj->get_time();
-			file_put_contents($filePath,$time);
-			$this->timeList[$id]=$time;
-		}, true);
-		if($pid = $process->start()){
-			$this->processList[$pid]=$pid;
-			if(null===$this->timerId){
-				$id=swoole_timer_tick(1000,function ($id){
-					$res=swoole_process::wait(false);
-					unset($this->processList[$res['pid']]);
-					if(empty($this->processList)){
-						swoole_timer_clear($id);
-						$this->timerId=null;
-					}
-				});
-				$this->timerId=$id;
-			}
-		}
-	}
-
-	function getStream($url,$length=4096){
-		$fp=fopen($url,'rb');
-		$header=stream_get_meta_data($fp);
-		$content=stream_get_contents($fp,$length);
-		fclose($fp);
-		$length = $this->my_headers($header['wrapper_data']);
-		return [$length,$content];
-	}
-
-	function my_headers($headers){
-		$_header = [];
-		if(!empty($headers)){
-			unset($headers[0]);
-			foreach ($headers as $d){
-				list($k,$v) = explode(":",$d);
-				$_header[$k] = trim($v);
-			}
-		}
-		if($_header['Content-Length']) return $_header['Content-Length'];
-		return 0;
-	}
-
 
 	static function getCurl($url,$headerOnly=false){
 		$ch = curl_init($url);
