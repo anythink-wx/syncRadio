@@ -20,7 +20,7 @@ class player{
 	public $timeList = [];
 
 
-	private $playList='play.log';
+	private $playList = 'default.txt';
 	private $dataPath;
 	private $timerId=null;
 	private $processList=[];
@@ -41,9 +41,15 @@ class player{
 	/**
 	 * 获取播放列表
 	 */
-	public function loadMusicList(){
+	public function loadMusicList($playList=''){
+		if(!$playList){
+			$playList = conf::$config['play']['default'];
+			$this->playList = $playList;
+		}
+		echo '加载歌曲列表:'.$playList.PHP_EOL;
+
 		$list = $contents = "";
-		$file =  ROOT.'/lib/'.$this->playList;
+		$file =  ROOT.'/list/'.$this->playList;
 		if(!file_exists($file)){
 			file_put_contents($file,"");
 		}else{
@@ -61,7 +67,7 @@ class player{
 		if(!$this->list) $this->loadMusicList();
 		$this->list[$id] = $id;
 		$string = implode("\r\n",$this->list);
-		$file =  ROOT.'/lib/'.$this->playList;
+		$file =  ROOT.'/list/'.$this->playList;
 		file_put_contents($file,$string);
 	}
 

@@ -42,7 +42,7 @@ class user extends  baseEvent{
 			$online = count($server->connections);
 			$server->push($frame->fd,Server::badge('online',$online));
 		}elseif($badge->act =='addsong'){
-			$rate = conf::$config['song']['add_song_rate'];
+			$rate = conf::$config['song']['select_song_rate'];
 
 			if(limit::verify('add_song_'.$frame->fd,$rate)){
 				echo '点歌频次限制'.$rate.PHP_EOL;
