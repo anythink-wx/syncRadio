@@ -24,7 +24,7 @@ class player{
 	private $dataPath;
 	private $timerId=null;
 	private $processList=[];
-	public $list=[];
+	public static $list=[];
 
 	function __destruct(){
 		foreach($this->processList as $pid){
@@ -58,15 +58,15 @@ class player{
 		$_list = explode("\r\n",$contents);
 		$list = [];
 		foreach($_list as $d) $list[$d] = $d;
-		$this->list = $list;
+		self::$list = $list;
 	}
 
 
 	function pushMusicList($id){
 		//如果没有list，则初始化music列表
-		if(!$this->list) $this->loadMusicList();
-		$this->list[$id] = $id;
-		$string = implode("\r\n",$this->list);
+		if(!self::$list) $this->loadMusicList();
+		self::$list[$id] = $id;
+		$string = implode("\r\n",self::$list);
 		$file =  ROOT.'/list/'.$this->playList;
 		file_put_contents($file,$string);
 	}
@@ -79,7 +79,8 @@ class player{
 		$data = [];
 		$uri = 'http://www.xiami.com/song/playlist/id/' . $id;
 		$xml_info = ROOT.'/data/'.$id.'.xml';
-		if(file_exists($xml_info)){
+
+		if(file_exists($xml_info) && (filectime($xml_info) + 21600 > time())){
 			$source = file_get_contents($xml_info);
 		}else{
 			$source = self::getCurl($uri);
@@ -109,22 +110,23 @@ class player{
 		new conf();
 		$random = conf::$config['play']['random'];
 		if($random){
-			$id = array_rand($this->list,1);
+			$id = array_rand(self::$list,1);
 			if($id){
-				$music = $this->list[$id];
-				unset($this->list[$id]);
-				echo '抽取随机歌曲'.$music.PHP_EOL;
-				echo '曲库剩余:'.count($this->list).PHP_EOL;
+				$playId = self::$list[$id];
+				unset(self::$list[$id]); //从队列中移除
+				echo '抽取随机歌曲'.$playId.PHP_EOL;
+				echo '曲库剩余:'.count(self::$list).PHP_EOL;
 			}
 		}else{
-			$music = array_shift($this->list);
+			$playId = array_shift(self::$list);
 		}
 
 		if($preLoad){
-			array_unshift($this->list,$music);
+			array_unshift(self::$list,$playId);
+
 		}
-		if(!$music) return false;
-		return $music;
+		if(!$playId) return false;
+		return $playId;
 	}
 
 	/**

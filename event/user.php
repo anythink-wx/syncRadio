@@ -17,6 +17,8 @@ event::onAdd(event::EVENT_OPEN,   'chat');
 event::onAdd(event::EVENT_MESSAGE,'chat');
 event::onAdd(event::EVENT_CLOSE,  'chat');
 
+event::onAdd(event::EVENT_MESSAGE,'op');
+
 class user extends  baseEvent{
 
 

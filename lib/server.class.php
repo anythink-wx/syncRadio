@@ -90,8 +90,6 @@ class Server {
 				if(kv::play_id() == 0 ){
 					kv::play_id($id);
 					kv::play_time($data['length']);
-
-
 				}elseif(kv::play_time() <= 0){
 					$id = $player->shiftMusicList();
 					if($id){
@@ -100,15 +98,9 @@ class Server {
 						kv::play_time($data['length']);
 					}else{
 						$player->loadMusicList();
-						echo '重置播放列表'.PHP_EOL;
+						$this->serverLog('重置播放列表');
 					}
-				}elseif(kv::play_time() >=5 and kv::play_time() <=10){
-
-					$id = $player->shiftMusicList(true);
-                    $data = player::getPlayUrl($id);
-                    echo '预下载'.$id.PHP_EOL;
-                    sleep(6);
-                }
+				}
 				sleep(1);
 			}
 		});
@@ -126,8 +118,7 @@ class Server {
         $list = scandir($dir);
         foreach($list as $d){
             if(substr($d,0,1) != '.'){
-				echo $dir.'/'.$d.PHP_EOL;
-                unlink($dir.'/'.$d);
+                unlink($dir.$d);
             }
         }
     }
@@ -195,6 +186,7 @@ class Server {
 
 	function onRequest(swoole_http_request $request, swoole_http_response $response){
 		$path_info =  $request->server['path_info'];
+		echo $path_info.PHP_EOL;
 		if($path_info == '/') {
             ob_start();
             include ROOT . '/public/index.html';
