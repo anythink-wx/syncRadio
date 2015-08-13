@@ -28,14 +28,10 @@
                 console.log('播放ID:' + res.data.playId);
                 console.log('播放偏移:' + res.data.playTime);
                 console.log('播放地址:' + res.data.url);
-                //music(res.data,1);
+                console.log(res.data);
+                music(res.data,1);
             }
-            console.log('开始播放');
-            if ($('body').is('.first')) {
-                music(res.data, 1);
-            } else {
-                music(res.data, 0);
-            }
+
 
         } else if (res.act == 'online') {
             console.log('在线人数:' + res.data);

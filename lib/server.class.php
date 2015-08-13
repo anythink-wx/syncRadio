@@ -6,7 +6,6 @@
  * Time: 下午6:32
  */
 
-
 class admin{
 
     function auth(&$request,&$response){
@@ -31,7 +30,6 @@ class admin{
 }
 class Server {
 
-	public $online = 0; // 在线用户数
 	protected $playerFlag = -1;             //播放服务状态
 
 	/**
@@ -122,9 +120,6 @@ class Server {
             }
         }
     }
-
-	
-
 
 
 	function onOpen(swoole_websocket_server $_server, swoole_http_request $request)	{

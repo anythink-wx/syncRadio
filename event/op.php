@@ -24,8 +24,9 @@ class op extends baseEvent{
 			$server->push($frame->fd,Server::badge('admin-list',$string));
 			//切歌
 		}elseif($badge->act == 'admin-cut'){
-			kv::play_time(0); //剩余时间
+
 			if(kv::play_id()){
+                kv::play_time(0); //剩余时间
 				$data = player::getPlayUrl(kv::play_id());
 				$this->broadcast(Server::badge('sync',$data),$server);
 			}
