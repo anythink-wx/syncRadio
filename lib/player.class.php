@@ -54,7 +54,6 @@ class player{
 		//如果没有list，则初始化music列表
         $db = new db();
         $list = $db->find('playNow',"isPlay = 0");
-		if($list) $this->loadMusicList();
         $db->create('playNow',['xiami_id'=>$id]);
 		$string = implode("\r\n",$list);
 		$file =  ROOT.'/lib/'.$this->playList;
