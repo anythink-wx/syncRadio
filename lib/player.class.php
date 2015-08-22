@@ -51,13 +51,12 @@ class player{
 
 
 	function pushMusicList($id){
-		//如果没有list，则初始化music列表
         $db = new db();
         $list = $db->find('playNow',"isPlay = 0");
         $db->create('playNow',['xiami_id'=>$id]);
 		$string = implode("\r\n",$list);
 		$file =  ROOT.'/lib/'.$this->playList;
-		file_put_contents($file,$string);
+		//file_put_contents($file,$string);
 	}
 
 	/**
@@ -113,9 +112,10 @@ class player{
             }
 
 		}else{
+			$db = new db();
             $play_list = $db->find("playNow",'isPlay = 0');
 			$music = array_shift($play_list);
-            $db->update('playNow',['xiami_id'=>$music['xiami_id']]);
+            $db->update('playNow',['isPlay' => 1],['id'=>$music['id']]);
 		}
 
 		if(!$music) return false;
