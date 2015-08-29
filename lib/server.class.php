@@ -47,7 +47,6 @@ class Server {
 
 	function init(){
 		$this->clearRunTimeFile();
-		swoole_set_process_name('syncRadio');
         new conf();
 		$server = new swoole_websocket_server(conf::$config['server']['listen'], conf::$config['server']['port']);
 		$server->addlistener('127.0.0.1',conf::$config['server']['mport'],SWOOLE_SOCK_TCP);
@@ -106,6 +105,7 @@ class Server {
 	}
 
     function onStart(swoole_server $server){
+        swoole_set_process_name('syncRadio');
         kv::pid(0);
         kv::pid($server->manager_pid);
 

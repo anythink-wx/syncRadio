@@ -3,4 +3,9 @@
 # ignore
 
 /.idea
-/data
+
+/conf/default.ini
+
+/data/*
+!/data/.dir
+!/data/db.simple.sqlite
