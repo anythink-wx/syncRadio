@@ -6,7 +6,7 @@
  * Time: 下午9:50
  */
 class db{
-    private $file = 'data/db.sqlite';
+    private $file = 'db.sqlite';
     private $db;
 
     function __construct(){

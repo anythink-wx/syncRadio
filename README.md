@@ -2,6 +2,11 @@
 
 一个基于websocket的同步电台，暂命名秘密花园
 
+## 如何部署
+
+	cp conf/default.simple.ini conf/default.ini
+	cp db.simple.sqlite db.sqlite
+	./music.php
 
 ##指令约束
 

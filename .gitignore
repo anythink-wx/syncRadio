@@ -5,7 +5,7 @@
 /.idea
 
 /conf/default.ini
+db.sqlite
 
 /data/*
 !/data/.dir
-!/data/db.simple.sqlite
