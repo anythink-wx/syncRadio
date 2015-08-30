@@ -35,7 +35,12 @@
 
         } else if (res.act == 'online') {
             console.log('在线人数:' + res.data);
-            $('#status').html("有" + res.data + "人与您共同聆听");
+            var num=res.data - 1;
+            if(num){
+                $('#status').html("有" + num  + "人与您共同聆听");
+            }else{
+                $('#status').html("还没有人陪您一起, 快拉朋友一起来听吧");
+            }
         } else if (res.act == 'playinfo') {
             music(res.data, 0);
         } else if (res.act == 'ok' || res.act == 'error') {

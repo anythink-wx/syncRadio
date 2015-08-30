@@ -14,11 +14,8 @@ require(__DIR__ . '/lib/event.class.php');
 require(__DIR__ . '/lib/sqlite.class.php');
 require(__DIR__ . '/lib/functions.php');
 
-//$db = new db();
-//$db->create('playNow',['xiami_id' => '112211']);
-//$res = $db->find('playNow');
-//print_r($res);
-//exit;
+
+
 $radio = new Server();
 $radio->init();
 $radio->start();

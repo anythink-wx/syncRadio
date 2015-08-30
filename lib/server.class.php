@@ -24,7 +24,6 @@ class admin{
           //  echo "<p>You entered {$_SERVER['PHP_AUTH_PW']} as your password.</p>";
         }
 
-
         return false;
     }
 }
@@ -43,19 +42,22 @@ class Server {
 	 */
 	private $event;
 	private $server;
-	private $process;
 
 	function init(){
-		$this->clearRunTimeFile();
+        @swoole_set_process_name('syncRadio');
+        $this->clearRunTimeFile();
         new conf();
+
 		$server = new swoole_websocket_server(conf::$config['server']['listen'], conf::$config['server']['port']);
-		$server->addlistener('127.0.0.1',conf::$config['server']['mport'],SWOOLE_SOCK_TCP);
-		$server->on('open', [$this, 'onOpen']);
-		$server->on('message', [$this, 'onMessage']);
-		$server->on('close', [$this, 'onClose']);
-		$server->on('request',[$this,'onRequest']);
+//		$server->addlistener('127.0.0.1',conf::$config['server']['mport'],SWOOLE_SOCK_TCP);
+        $server->addProcess($this->loadProcess());
+        $server->on('open', [$this, 'onOpen']);
+        $server->on('message', [$this, 'onMessage']);
+        $server->on('close', [$this, 'onClose']);
+        $server->on('request',[$this,'onRequest']);
         $server->on('start',[$this,'onStart']);
-		$server->set([
+        $server->on('shutdown',[$this,'onShutdown']);
+        $server->set([
 			'reactor_num' => conf::$config['server']['reactor_num'],
 			'worker_num' => conf::$config['server']['worker_num'],
 			'backlog' => conf::$config['server']['backlog'],
@@ -66,61 +68,21 @@ class Server {
             'group' =>conf::$config['server']['group'],
 		]);
 
+        $this->server = $server;
+        $this->player = new player();
+        $this->event  = new event();
 
-		$this->server = $server;
-		$this->player = new player();
-		$this->event  = new event();
+        kv::online(0); //初始化在线统计
+        kv::user([]);  //初始化在线列表
+        kv::play_id(0); //当前播放数
+        kv::play_time(0); //剩余时间
 
-		kv::online(0); //初始化在线统计
-		kv::user([]);  //初始化在线列表
-		kv::play_id(0); //当前播放数
-		kv::play_time(0); //剩余时间
-
-		$this->process = new swoole_process(function(swoole_process $worker) {
-			$play_id = 0;
-			$playTime = 0;
-			swoole_set_process_name("syncRadio : player");
-			$player = $this->player;
-			$id = $player->shiftMusicList();
-			$data = player::getPlayUrl($id);
-			while(true){
-				if(kv::play_id() == 0 ){
-					kv::play_id($id);
-					kv::play_time($data['length']);
-				}elseif(kv::play_time() <= 0){
-					$id = $player->shiftMusicList();
-					if($id){
-						$data = player::getPlayUrl($id);
-						kv::play_id($id);
-						kv::play_time($data['length']);
-					}else{
-						$player->loadMusicList();
-						$this->serverLog('重置播放列表');
-					}
-				}
-				sleep(1);
-			}
-		});
-		$server->addProcess($this->process);
-	}
+    }
 
     function onStart(swoole_server $server){
-        swoole_set_process_name('syncRadio');
         kv::pid(0);
         kv::pid($server->manager_pid);
-
     }
-
-    private function clearRunTimeFile(){
-        $dir = ROOT.'/data/';
-        $list = scandir($dir);
-        foreach($list as $d){
-            if(substr($d,0,1) != '.'){
-                unlink($dir.$d);
-            }
-        }
-    }
-
 
 	function onOpen(swoole_websocket_server $_server, swoole_http_request $request)	{
 		$status = $_server->connection_info($request->fd);
@@ -140,8 +102,6 @@ class Server {
 		$this->event->eventMessage($_server,$frame);
 	}
 
-
-
 	function onClose(swoole_websocket_server $_server, $fd){
 		$status = $_server->connection_info($fd);
 		if($status['websocket_status'] != 0){
@@ -155,24 +115,26 @@ class Server {
 		}
 	}
 
+    function onShutdown(swoole_websocket_server $_server){
+        touch('/tmp/shutdown');
+    }
+
 	function onPlay(){
 		$play_id = kv::play_id();
 		$play_time = kv::play_time();
-
+        $speed=1;
 
 		if($play_id !=0){
 			if($play_time > 0){
-				$play_time-=1;
+				$play_time-=$speed;
 				kv::play_time($play_time);
-				$this->serverLog('正在播放 '.$play_id.'剩余 '.$play_time);
+				$this->serverLog('正在播放:'.$play_id.' 剩余:'.$play_time.'s');
 				if($play_time %10 ==0){
 					//$this->serverLog('正在播放 剩余 '.$play_time);
 				}
-
 			}else{
 				kv::play_time(0);
 			}
-
 		}else{
 			kv::play_time(0);
 			$this->serverLog('当前曲目播放完毕 '.$play_id);
@@ -213,6 +175,41 @@ class Server {
 		}
 	}
 
+    private function clearRunTimeFile(){
+        $dir = ROOT.'/data/';
+        $list = scandir($dir);
+        foreach($list as $d){
+            if(substr($d,0,1) != '.'){
+                unlink($dir.$d);
+            }
+        }
+    }
+
+    protected function loadProcess(){
+        return new swoole_process(function(swoole_process $worker) {
+            @swoole_set_process_name("syncRadio : player");
+            $player = $this->player;
+            $id = $player->shiftMusicList();
+            $data = player::getPlayUrl($id);
+            while(true){
+                if(kv::play_id() == 0 ){
+                    kv::play_id($id);
+                    kv::play_time($data['length']);
+                }elseif(kv::play_time() <= 0){
+                    $id = $player->shiftMusicList();
+                    if($id){
+                        $data = player::getPlayUrl($id);
+                        kv::play_id($id);
+                        kv::play_time($data['length']);
+                    }else{
+                        $player->loadMusicList();
+                        $this->serverLog('重置播放列表');
+                    }
+                }
+                sleep(1);
+            }
+        });
+    }
 
 	static function badge($action,$message){
 		return json_encode(['act'=>$action,'data'=>$message]);
@@ -239,7 +236,7 @@ class Server {
 	}
 
 	private function convert($size){
-		$unit=array('b','kb','mb','gb','tb','pb');
+		$unit=array('B','KB','MB','GB','TB','PB','EB');
 		return @round($size/pow(1024,($i=floor(log($size,1024)))),2).' '.$unit[$i];
 	}
 
