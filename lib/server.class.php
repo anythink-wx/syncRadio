@@ -19,7 +19,6 @@ class admin{
             $response->end( 'Text to send if user hits Cancel button');
            return false;
         } else {
-
            // echo "<p>Hello {$request->header['authorization']}.</p>";
           //  echo "<p>You entered {$_SERVER['PHP_AUTH_PW']} as your password.</p>";
         }
@@ -80,6 +79,7 @@ class Server {
     }
 
     function onStart(swoole_server $server){
+        @swoole_set_process_name('syncRadio:manager');
         kv::pid(0);
         kv::pid($server->manager_pid);
     }
@@ -116,7 +116,7 @@ class Server {
 	}
 
     function onShutdown(swoole_websocket_server $_server){
-        touch('/tmp/shutdown');
+        $this->serverLog('服务器已退出');
     }
 
 	function onPlay(){
@@ -187,7 +187,7 @@ class Server {
 
     protected function loadProcess(){
         return new swoole_process(function(swoole_process $worker) {
-            @swoole_set_process_name("syncRadio : player");
+            @swoole_set_process_name("syncRadio:loader");
             $player = $this->player;
             $id = $player->shiftMusicList();
             $data = player::getPlayUrl($id);
@@ -214,6 +214,7 @@ class Server {
 	static function badge($action,$message){
 		return json_encode(['act'=>$action,'data'=>$message]);
 	}
+
 	static function badgeDecode($str){
 		$str = json_decode($str);
 		return $str;
