@@ -14,8 +14,6 @@ require(__DIR__ . '/lib/event.class.php');
 require(__DIR__ . '/lib/sqlite.class.php');
 require(__DIR__ . '/lib/functions.php');
 
-
-
 $radio = new Server();
 $radio->init();
 $radio->start();

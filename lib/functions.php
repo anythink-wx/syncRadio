@@ -32,6 +32,10 @@ class kv {
 	}
 }
 
+function serverLog(){
+
+}
+
 class conf{
 
     public static $config;
@@ -48,6 +52,8 @@ class conf{
 
     }
 }
+
+
 
 
 class limit{

@@ -6,25 +6,23 @@
  * Time: 下午9:50
  */
 class db{
-    private $file = 'db.sqlite';
+    private $file = 'music.db';
     private $db;
 
     function __construct(){
         if(!$this->db  = new SQLite3($this->file)){
-            echo 'open db error';
             $this->db->lastErrorMsg();
         }
     }
 
     function find($table,$where=''){
-
         if($where){
             $where = " where ".$where;
         }
-
         $sql = "select * from " .$table .' '. $where;
         echo $sql.PHP_EOL;
         if($res = $this->db->query($sql)){
+			$data = [];
             while ($row = $res->fetchArray(SQLITE3_ASSOC)) {
                 if($row){
                     $data[] = $row;

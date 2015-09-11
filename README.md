@@ -4,8 +4,9 @@
 
 ## 如何部署
 
+    need php5.4+ ,php extension swoole 1.7.19
 	cp conf/default.simple.ini conf/default.ini
-	cp db.simple.sqlite db.sqlite
+	cp music.simple.db music.db
 	./music.php
 
 ##指令约束

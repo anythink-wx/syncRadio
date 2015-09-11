@@ -66,6 +66,7 @@ class player{
 	static function getPlayUrl($id){
 		$data = [];
 		$uri = 'http://www.xiami.com/song/playlist/id/' . $id;
+		echo 'loadurl' . $uri .PHP_EOL;
 		$xml_info = ROOT.'/data/'.$id.'.xml';
 
 		if(file_exists($xml_info) && (filectime($xml_info) + 21600 > time())){
@@ -102,6 +103,7 @@ class player{
             $play_list = $db->find("playNow",'isPlay = 0');
             if(is_array($play_list)){
                 $index = array_rand($play_list,1);
+
                 $music = $play_list[$index];
                 $db->update('playNow',['isPlay' => 1],['id' => $music['id']]);
                 echo '抽取随机歌曲'.$music['xiami_id'].PHP_EOL;
@@ -113,9 +115,10 @@ class player{
 
 		}else{
 			$db = new db();
-            $play_list = $db->find("playNow",'isPlay = 0');
-			$music = array_shift($play_list);
+            $music = $db->find("playNow",'isPlay = 0 limit 1');
+			$music = array_shift($music);
             $db->update('playNow',['isPlay' => 1],['id'=>$music['id']]);
+			echo '正常抽取歌曲'.$music['xiami_id'].PHP_EOL;
 		}
 
 		if(!$music) return false;

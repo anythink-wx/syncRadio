@@ -43,12 +43,13 @@ class Server {
 	private $server;
 
 	function init(){
-        @swoole_set_process_name('syncRadio');
+		if(!class_exists('swoole_websocket_server')){
+			exit("Yhe server need swoole php extension ".PHP_EOL."please run pecl install swoole installed".PHP_EOL);
+		}
+		@swoole_set_process_name('syncRadio');
         $this->clearRunTimeFile();
         new conf();
-
 		$server = new swoole_websocket_server(conf::$config['server']['listen'], conf::$config['server']['port']);
-//		$server->addlistener('127.0.0.1',conf::$config['server']['mport'],SWOOLE_SOCK_TCP);
         $server->addProcess($this->loadProcess());
         $server->on('open', [$this, 'onOpen']);
         $server->on('message', [$this, 'onMessage']);
@@ -70,12 +71,10 @@ class Server {
         $this->server = $server;
         $this->player = new player();
         $this->event  = new event();
-
         kv::online(0); //初始化在线统计
         kv::user([]);  //初始化在线列表
         kv::play_id(0); //当前播放数
         kv::play_time(0); //剩余时间
-
     }
 
     function onStart(swoole_server $server){
@@ -191,24 +190,29 @@ class Server {
             $player = $this->player;
             $id = $player->shiftMusicList();
             $data = player::getPlayUrl($id);
-            while(true){
-                if(kv::play_id() == 0 ){
-                    kv::play_id($id);
-                    kv::play_time($data['length']);
-                }elseif(kv::play_time() <= 0){
-                    $id = $player->shiftMusicList();
-                    if($id){
-                        $data = player::getPlayUrl($id);
-                        kv::play_id($id);
-                        kv::play_time($data['length']);
-                    }else{
-                        $player->loadMusicList();
-                        $this->serverLog('重置播放列表');
-                    }
-                }
-                sleep(1);
-            }
-        });
+
+			while(true){
+				if(kv::play_id() == 0 ){
+					kv::play_id($id);
+					kv::play_time($data['length']);
+				}elseif(kv::play_time() <= 0){
+					$id = $player->shiftMusicList();
+					if($id){
+						$data = player::getPlayUrl($id);
+						kv::play_id($id);
+						kv::play_time($data['length']);
+					}else{
+						$player->loadMusicList();
+						$this->serverLog('重置播放列表');
+					}
+				}
+				sleep(1);
+			}
+
+
+
+
+		});
     }
 
 	static function badge($action,$message){
