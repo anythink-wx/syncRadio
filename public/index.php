@@ -13,9 +13,9 @@ require(__DIR__ . '/../lib/functions.php');
 new conf();
 $server = $_SERVER['SERVER_ADDR'].':'. conf::$config['server']['port'];
 
-if(isset($_GET['ajax'])){
+if(isset($_GET['ajax']) && $_GET['ajax'] != '' ){
 	$web = new web();
 	$ret = $web->run($_GET['ajax']);
 	exit($ret);
 }
-include ROOT.'/tpl/index.phtml';
+include ROOT.'/tpl/online.phtml';
