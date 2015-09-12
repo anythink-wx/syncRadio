@@ -74,6 +74,7 @@ class event extends Server {
 	 * @param $callName
 	 */
 	public static function onAdd($event,$callName){
+		self::$on_list[$event] = [];
 		self::$on_list[$event][] = $callName;
 	}
 
