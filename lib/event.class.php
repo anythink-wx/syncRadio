@@ -82,7 +82,7 @@ class event extends Server {
 	function eventOpen($_server,$request){
 		if(self::$on_list['open']){
 			foreach(self::$on_list['open'] as  $class){
-				echo 'call event open :'.$class.PHP_EOL;
+				//echo 'call event open :'.$class.PHP_EOL;
 				if(!isset(self::$init[$class])){
 					self::$init[$class] = new $class();
 				}
@@ -94,7 +94,7 @@ class event extends Server {
 	function eventMessage(swoole_websocket_server $_server, $frame){
 		if(self::$on_list['message']){
 			foreach(self::$on_list['message'] as $class){
-				echo 'call event message :'.$class.PHP_EOL;
+				//echo 'call event message :'.$class.PHP_EOL;
 				if(!isset(self::$init[$class])){
 					self::$init[$class] = new $class();
 				}

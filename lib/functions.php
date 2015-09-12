@@ -32,6 +32,27 @@ class kv {
 	}
 }
 
+/**
+ * 数据共享存取
+ * @param        $key
+ * @param string $v
+ */
+function shareAccess($key,$v=false){
+	$db  = new db();
+	$res = $db->first('meta',"meta_name = '$key'");
+	if($v !== false){
+		if($res){
+			return $db->update('meta',['meta_name' => $key],['meta_val' => serialize($v)]);
+		}else{
+			return $db->create('meta',['meta_name' => $key,'meta_val' => serialize($v)]);
+		}
+	}
+	if($res){
+		return unserialize($res['meta_val']);
+	}
+	return false;
+}
+
 function serverLog(){
 
 }

@@ -44,7 +44,7 @@ class Server {
 
 	function init(){
 		if(!class_exists('swoole_websocket_server')){
-			exit("Yhe server need swoole php extension ".PHP_EOL."please run pecl install swoole installed".PHP_EOL);
+			exit("This server need swoole php extension ".PHP_EOL."please run pecl install swoole installed".PHP_EOL);
 		}
 		@swoole_set_process_name('syncRadio');
         $this->clearRunTimeFile();
@@ -71,23 +71,21 @@ class Server {
         $this->server = $server;
         $this->player = new player();
         $this->event  = new event();
-        kv::online(0); //初始化在线统计
-        kv::user([]);  //初始化在线列表
-        kv::play_id(0); //当前播放数
-        kv::play_time(0); //剩余时间
+		shareAccess('online',0);
+		shareAccess('play_id',0);
+		shareAccess('play_time',0);
     }
 
     function onStart(swoole_server $server){
         @swoole_set_process_name('syncRadio:manager');
-        kv::pid(0);
-        kv::pid($server->manager_pid);
+		file_put_contents('music.pid',$server->manager_pid);
     }
 
 	function onOpen(swoole_websocket_server $_server, swoole_http_request $request)	{
 		$status = $_server->connection_info($request->fd);
 		if($status['websocket_status'] != 0){
 			//判断是否启动播放服务
-			if (kv::online() == 0 && $this->playerFlag == -1) {
+			if (shareAccess('online') == 0 && $this->playerFlag == -1) {
 				$this->playerFlag = swoole_timer_tick(1000,[$this,'onPlay']);
 				$this->serverLog('播放模块已启动,模块ID：'.$this->playerFlag);
 			}
@@ -106,7 +104,7 @@ class Server {
 		if($status['websocket_status'] != 0){
 			$this->event->eventClose($_server,$fd);
 
-			if (kv::online() <= 0) {
+			if (shareAccess('online') <= 0) {
 				swoole_timer_clear($this->playerFlag);
 				$this->serverLog("播放模块已停止工作");
 				$this->playerFlag = -1;
@@ -119,23 +117,23 @@ class Server {
     }
 
 	function onPlay(){
-		$play_id = kv::play_id();
-		$play_time = kv::play_time();
+		$play_id = shareAccess('play_id');
+		$play_time = shareAccess('play_time');
         $speed=1;
-
 		if($play_id !=0){
 			if($play_time > 0){
 				$play_time-=$speed;
-				kv::play_time($play_time);
+				shareAccess('play_time',$play_time);
 				$this->serverLog('正在播放:'.$play_id.' 剩余:'.$play_time.'s');
 				if($play_time %10 ==0){
 					//$this->serverLog('正在播放 剩余 '.$play_time);
 				}
 			}else{
-				kv::play_time(0);
+				shareAccess('play_time',0);
+				shareAccess('play_id',0);
 			}
 		}else{
-			kv::play_time(0);
+			shareAccess('play_time',0);
 			$this->serverLog('当前曲目播放完毕 '.$play_id);
 		}
 	}
@@ -192,15 +190,15 @@ class Server {
             $data = player::getPlayUrl($id);
 
 			while(true){
-				if(kv::play_id() == 0 ){
-					kv::play_id($id);
-					kv::play_time($data['length']);
-				}elseif(kv::play_time() <= 0){
+				if(shareAccess('play_id') == 0 ){
+					shareAccess('play_id',$id);
+					shareAccess('play_id',$data['length']);
+				}elseif(shareAccess('play_time') <= 0){
 					$id = $player->shiftMusicList();
 					if($id){
 						$data = player::getPlayUrl($id);
-						kv::play_id($id);
-						kv::play_time($data['length']);
+						shareAccess('play_id',$id);
+						shareAccess('play_time',$data['length']);
 					}else{
 						$player->loadMusicList();
 						$this->serverLog('重置播放列表');

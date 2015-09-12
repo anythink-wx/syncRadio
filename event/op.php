@@ -25,9 +25,9 @@ class op extends baseEvent{
 			//切歌
 		}elseif($badge->act == 'admin-cut'){
 
-			if(kv::play_id()){
-                kv::play_time(0); //剩余时间
-				$data = player::getPlayUrl(kv::play_id());
+			if(shareAccess('play_id')){
+				shareAccess('play_time',0); //剩余时间
+				$data = player::getPlayUrl(shareAccess('play_id'));
 				$this->broadcast(Server::badge('sync',$data),$server);
 			}
 			$server->push($frame->fd,Server::badge('ok','已经设定到服务器'));
@@ -36,8 +36,8 @@ class op extends baseEvent{
 			if($badge->data){
 				$player = new player();
 				$player->loadMusicList($badge->data);
-				kv::play_time(0); //切歌
-				$data = player::getPlayUrl(kv::play_id());
+				shareAccess('play_time',0);
+				$data = player::getPlayUrl(shareAccess('play_id'));
 				$this->broadcast(Server::badge('sync',$data),$server);
 			}
 		}

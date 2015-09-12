@@ -52,7 +52,7 @@ class player{
 
 	function pushMusicList($id){
         $db = new db();
-        $list = $db->find('playNow',"isPlay = 0");
+        $list = $db->findAll('playNow',"isPlay = 0");
         $db->create('playNow',['xiami_id'=>$id]);
 		$string = implode("\r\n",$list);
 		$file =  ROOT.'/lib/'.$this->playList;
@@ -66,7 +66,7 @@ class player{
 	static function getPlayUrl($id){
 		$data = [];
 		$uri = 'http://www.xiami.com/song/playlist/id/' . $id;
-		echo 'loadurl' . $uri .PHP_EOL;
+		echo 'loadurl . ' . $uri .PHP_EOL;
 		$xml_info = ROOT.'/data/'.$id.'.xml';
 
 		if(file_exists($xml_info) && (filectime($xml_info) + 21600 > time())){
@@ -100,12 +100,12 @@ class player{
 		$random = conf::$config['play']['random'];
 		if($random){
             $db = new db();
-            $play_list = $db->find("playNow",'isPlay = 0');
+            $play_list = $db->findAll("playNow",'isPlay = 0');
             if(is_array($play_list)){
                 $index = array_rand($play_list,1);
 
                 $music = $play_list[$index];
-                $db->update('playNow',['isPlay' => 1],['id' => $music['id']]);
+                $db->update('playNow',['id' => $music['id']],['isPlay' => 1]);
                 echo '抽取随机歌曲'.$music['xiami_id'].PHP_EOL;
                 echo '曲库剩余:'.count($play_list).PHP_EOL;
 
@@ -115,9 +115,8 @@ class player{
 
 		}else{
 			$db = new db();
-            $music = $db->find("playNow",'isPlay = 0 limit 1');
-			$music = array_shift($music);
-            $db->update('playNow',['isPlay' => 1],['id'=>$music['id']]);
+            $music = $db->first("playNow",'isPlay = 0  limit 1');
+            $db->update('playNow',['id'=>$music['id']],['isPlay' => 1]);
 			echo '正常抽取歌曲'.$music['xiami_id'].PHP_EOL;
 		}
 

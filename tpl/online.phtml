@@ -62,7 +62,7 @@
 
 
 <script type="text/javascript">
-	var wsServer = 'ws://127.0.0.1:8810';
+	var wsServer = 'ws://<?=$server;?>';
     $(document).ready(function () {
         if(location.hash.substring(1) == '') {
             $('body').addClass('adj');
