@@ -11,7 +11,7 @@ require(__DIR__ . '/../lib/player.class.php');
 require(__DIR__ . '/../lib/web.class.php');
 require(__DIR__ . '/../lib/functions.php');
 new conf();
-$server = $_SERVER['SERVER_ADDR'].':'. conf::$config['server']['port'];
+$server = $_SERVER['REMOTE_ADDR'].':'. conf::$config['server']['port'];
 
 if(isset($_GET['ajax']) && $_GET['ajax'] != '' ){
 	$web = new web();
