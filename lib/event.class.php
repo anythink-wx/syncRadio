@@ -20,7 +20,7 @@ abstract class baseEvent{
 	 * @param swoole_websocket_server $server 服务worker
 	 */
 	function broadcast($badge,swoole_websocket_server $server){
-		$user = kv::user();
+		$user = shareAccess('user');
 		foreach($user as $fd){
 			$server->push($fd,$badge);
 		}
@@ -74,8 +74,10 @@ class event extends Server {
 	 * @param $callName
 	 */
 	public static function onAdd($event,$callName){
-		self::$on_list[$event] = [];
-		self::$on_list[$event][] = $callName;
+		if(!isset(self::$on_list[$event])){
+			self::$on_list[$event] = [];
+		}
+		array_push(self::$on_list[$event],$callName);
 	}
 
 
@@ -83,7 +85,7 @@ class event extends Server {
 	function eventOpen($_server,$request){
 		if(self::$on_list['open']){
 			foreach(self::$on_list['open'] as  $class){
-				//echo 'call event open :'.$class.PHP_EOL;
+				echo 'call event open :'.$class.PHP_EOL;
 				if(!isset(self::$init[$class])){
 					self::$init[$class] = new $class();
 				}
