@@ -52,7 +52,7 @@ class db{
         if(empty($row))return FALSE;
 
         if(is_array($conditions)){
-            $join = array();
+            $join = [];
             foreach( $conditions as $key => $condition ){
                 $join[] = "`{$key}` = '{$condition}'";
             }
@@ -75,6 +75,7 @@ class db{
 
 
     function create($table,$row){
+		$cols = $vals = [];
         foreach($row as $key => $value){
             $cols[] = '`'.$key.'`';
             $vals[] = "'$value'";
