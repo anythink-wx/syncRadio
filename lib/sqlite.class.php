@@ -62,7 +62,7 @@ class db{
         }
 
 
-
+		$vals = [];
         foreach($row as $key => $value){
             $value = $value;
             $vals[] = "`{$key}` = '{$value}'";
