@@ -190,15 +190,15 @@ class Server {
             $data = player::getPlayUrl($id);
 
 			while(true){
-				if(shareAccess('play_id') == 0 ){
-					shareAccess('play_id',$id);
-					shareAccess('play_id',$data['length']);
-				}elseif(shareAccess('play_time') <= 0){
+				if(shareAccess('play_time') <= 0){
 					$id = $player->shiftMusicList();
 					if($id){
 						$data = player::getPlayUrl($id);
-						shareAccess('play_id',$id);
-						shareAccess('play_time',$data['length']);
+						if(!empty($data)){
+							shareAccess('play_id',$id);
+							shareAccess('play_time',$data['length']);
+						}
+
 					}else{
 						$player->loadMusicList();
 						$this->serverLog('重置播放列表');
