@@ -60,6 +60,18 @@ class player{
 	}
 
 	/**
+	 * 点播歌单
+	 */
+	function pushSelectList($id){
+		$db = new db();
+		$res = $db->first('playSelect',"xiami_id = $id");
+		if(!$res){
+			return $db->create('playSelect',['xiami_id'=>$id]);
+		}
+		return false;
+	}
+
+	/**
 	 * 获取某首歌的播放地址
 	 * @param $id
 	 */
@@ -97,9 +109,35 @@ class player{
 	 */
 	function shiftMusicList($preLoad=false){
 		new conf();
+
+		$select_song = conf::$config['song']['select_song'];
+		$db = new db();
+
+		if($select_song){
+			$random = conf::$config['song']['random'];
+			$play_list = $db->findAll("playSelect",'isPlay = 0');
+			if($play_list){
+				if($random){
+					$index = array_rand($play_list,1);
+					$music = $play_list[$index];
+					$db->update('playSelect',['id' => $music['id']],['isPlay' => 1]);
+					echo '抽取点播随机歌曲'.$music['xiami_id'].PHP_EOL;
+					echo '曲库剩余:'.count($play_list).PHP_EOL;
+					return $music['xiami_id'];
+				}else{
+					$music = $play_list[0];
+					$db->update('playSelect',['id'=>$music['id']],['isPlay' => 1]);
+					echo '正常抽取点播歌曲'.$music['xiami_id'].PHP_EOL;
+					return $music['xiami_id'];
+				}
+			}
+		}
+
+
+		echo '无点播歌曲，走系统播放歌单'.PHP_EOL;
 		$random = conf::$config['play']['random'];
 		if($random){
-            $db = new db();
+
             $play_list = $db->findAll("playNow",'isPlay = 0');
             if(is_array($play_list)){
                 $index = array_rand($play_list,1);

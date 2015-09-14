@@ -50,7 +50,7 @@ class user extends  baseEvent{
 				$player = new player();
 				$data = player::getPlayUrl((int)$badge->data);
 				if(!empty($data)){
-					$player->pushMusicList((int)$badge->data);
+					$player->pushSelectList((int)$badge->data);
 					$response = Server::badge('ok','歌曲添加成功');
 				}else{
 					$response = Server::badge('error','歌曲不存在');

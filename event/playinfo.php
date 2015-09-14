@@ -31,8 +31,6 @@ class playinfo extends baseEvent{
 			$data = player::getPlayUrl(trim($badge->data));
 			$server->push($frame->fd,Server::badge('playinfo',$data));
 		}
-
-
 	}
 
 	function close(swoole_websocket_server $server, $frame){}

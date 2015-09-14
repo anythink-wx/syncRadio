@@ -68,6 +68,10 @@ class Server {
             'group' =>conf::$config['server']['group'],
 		]);
 
+
+
+
+
         $this->server = $server;
         $this->player = new player();
         $this->event  = new event();
@@ -186,8 +190,8 @@ class Server {
         return new swoole_process(function(swoole_process $worker) {
             @swoole_set_process_name("syncRadio:loader");
             $player = $this->player;
-            $id = $player->shiftMusicList();
-            $data = player::getPlayUrl($id);
+           // $id = $player->shiftMusicList();
+            //$data = player::getPlayUrl($id);
 
 			while(true){
 				if(shareAccess('play_time') <= 0){

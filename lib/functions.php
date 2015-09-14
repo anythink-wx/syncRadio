@@ -79,7 +79,7 @@ class conf{
 
 class limit{
 	static function verify($key,$time){
-		$res = kv::shareGet($key);
+		$res = shareAccess($key);
 		if($res){
 			if($res + $time > time()){
 				return false;
@@ -91,7 +91,7 @@ class limit{
 	}
 
 	static function keep($key){
-		kv::sharePut($key,time());
+		shareAccess($key,time());
 	}
 }
 
