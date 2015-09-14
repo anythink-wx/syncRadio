@@ -78,7 +78,7 @@ class Server {
 
     function onStart(swoole_server $server){
         @swoole_set_process_name('syncRadio:manager');
-		file_put_contents(ROOT.'music.pid',$server->manager_pid);
+		file_put_contents(ROOT.'/music.pid',$server->manager_pid);
     }
 
 	function onOpen(swoole_websocket_server $_server, swoole_http_request $request)	{
