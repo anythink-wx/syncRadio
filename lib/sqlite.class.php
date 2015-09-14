@@ -10,7 +10,7 @@ class db{
     private $db;
 
     function __construct(){
-        if(!$this->db  = new SQLite3($this->file)){
+        if(!$this->db  = new SQLite3(ROOT.$this->file)){
             $this->db->lastErrorMsg();
         }
     }
