@@ -2,12 +2,27 @@
 
 一个基于websocket的同步电台，暂命名秘密花园
 
-## 如何部署
+## 系统要求
 
-    need php5.4+ ,php extension swoole 1.7.19
+	确保运行Linux系列操作系统，程序不能运行在windows平台。
+	必须安装php5.4及以上版本，php扩展要求安装curl，sqlite3，swoole 1.7.19及以上版本。
+
+## 程序部署
+
+	服务端
 	cp conf/default.simple.ini conf/default.ini
 	cp music.simple.db music.db
 	./music.php
+
+	web客户端及管理后台
+	将public/目录绑定到一个域名，设置index.php为默认页面，否则不能正常访问web
+
+	iOS客户端
+	正在研发
+
+	Android客户端
+	准备中
+
 
 ##指令约束
 
