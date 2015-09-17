@@ -48,13 +48,24 @@ function shareAccess($key,$v=false){
 		}
 	}
 	if($res){
+		serverLog('getKey:'.$key.' <-> '. json_encode(unserialize($res['meta_val'])));
 		return unserialize($res['meta_val']);
 	}
 	return false;
 }
 
-function serverLog(){
 
+function serverLog($msg){
+	$logPath = ROOT .'/data/server.log';
+	$msgFormat = '['.date('Y-m-d H:i:s').'] '.$msg.' Memusage'.convert(memory_get_usage(true)) . PHP_EOL;
+	file_put_contents($logPath,$msgFormat,FILE_APPEND);
+	echo $msg.PHP_EOL;
+}
+
+
+function convert($size){
+	$unit=array('B','KB','MB','GB','TB','PB','EB');
+	return @round($size/pow(1024,($i=floor(log($size,1024)))),2).' '.$unit[$i];
 }
 
 class conf{

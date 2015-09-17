@@ -11,7 +11,9 @@ class db{
 
     function __construct(){
         if(!$this->db  = new SQLite3(ROOT.'/'.$this->file)){
-            $this->db->lastErrorMsg();
+			if($this->db->lastErrorCode() != 100){
+				serverLog('db notice:'. $this->db->lastErrorCode().' # '. $this->db->lastErrorMsg());
+			}
         }
     }
 
@@ -22,6 +24,10 @@ class db{
         $sql = "select * from " .$table .' '. $where;
         if($res = $this->db->query($sql)){
 			$row = $res->fetchArray(SQLITE3_ASSOC);
+			if($this->db->lastErrorCode() != 100){
+				serverLog('db notice:'. $this->db->lastErrorCode().' # '. $this->db->lastErrorMsg());
+				serverLog($sql);
+			}
             return $row;
         }else{
             return false;
@@ -33,13 +39,17 @@ class db{
 			$where = " where ".$where;
 		}
 		$sql = "select * from " .$table .' '. $where;
-		echo $sql.PHP_EOL;
+		//echo $sql.PHP_EOL;
 		if($res = $this->db->query($sql)){
 			$data = [];
 			while ($row = $res->fetchArray(SQLITE3_ASSOC)) {
 				if($row){
 					$data[] = $row;
 				}
+			}
+			if($this->db->lastErrorCode() != 100){
+				serverLog('db notice:'. $this->db->lastErrorCode().' # '. $this->db->lastErrorMsg());
+				serverLog($sql);
 			}
 			return $data;
 		}else{
@@ -69,8 +79,13 @@ class db{
         }
         $values = join(", ",$vals);
         $sql = "UPDATE $table SET {$values} {$where}";
-        echo $sql.PHP_EOL;
-        return $this->db->exec($sql);
+       // echo $sql.PHP_EOL;
+        $ret = $this->db->exec($sql);
+		if($this->db->lastErrorCode() != 100){
+			serverLog('db notice:'. $this->db->lastErrorCode().' # '. $this->db->lastErrorMsg());
+			serverLog($sql);
+		}
+		return $ret;
     }
 
 
@@ -83,14 +98,14 @@ class db{
         $col = join(',', $cols);
         $val = join(',', $vals);
         $sql = "INSERT INTO $table ({$col}) VALUES ({$val})";
-        echo $sql.PHP_EOL;
+       // echo $sql.PHP_EOL;
         return $this->db->exec($sql);
 
     }
 
     function truncate($table){
         $sql = "DELETE FROM $table ";
-        echo $sql.PHP_EOL;
+       // echo $sql.PHP_EOL;
         return $this->db->exec($sql);
     }
 }

@@ -143,37 +143,7 @@ class Server {
 	}
 
 	function onRequest(swoole_http_request $request, swoole_http_response $response){
-		$path_info =  $request->server['path_info'];
-		echo $path_info.PHP_EOL;
-		if($path_info == '/') {
-            ob_start();
-            include ROOT . '/public/index.html';
-            $content = ob_get_clean();
-            $response->end($content);
-        }else if($path_info == '/admin'){
-            $admin = new admin();
-            if($admin->auth($request,$response)){
-
-            }else{
-                $response->end("auth error");
-            }
-		}else{
-			$static = ROOT .'/public'. $path_info;
-			if(is_file($static)){
-				$lastModified = date('D, d M Y H:i:s', filemtime($static)) .' GMT';
-				if(isset($request->header['if-modified-since']) &&
-					$request->header['if-modified-since']== $lastModified){
-					$response->status(304);
-					$response->end();
-				}else{
-					$response->header("Content-Type",mime_content($static));
-					$response->header('Last-Modified', $lastModified);
-					$response->end(file_get_contents($static));
-				}
-			}else{
-				$response->end();
-			}
-		}
+		$response->end();
 	}
 
     private function clearRunTimeFile(){
@@ -190,9 +160,6 @@ class Server {
         return new swoole_process(function(swoole_process $worker) {
             @swoole_set_process_name("syncRadio:loader");
             $player = $this->player;
-           // $id = $player->shiftMusicList();
-            //$data = player::getPlayUrl($id);
-
 			while(true){
 				if(shareAccess('play_time') <= 0){
 					$id = $player->shiftMusicList();
@@ -204,8 +171,8 @@ class Server {
 						}
 
 					}else{
-						$player->loadMusicList();
-						$this->serverLog('重置播放列表');
+						//$player->loadMusicList();
+						$this->serverLog('没有成功拉取到下一首歌');
 					}
 				}
 				sleep(1);
@@ -242,7 +209,7 @@ class Server {
 		echo $msg.PHP_EOL;
 	}
 
-	private function convert($size){
+	function convert($size){
 		$unit=array('B','KB','MB','GB','TB','PB','EB');
 		return @round($size/pow(1024,($i=floor(log($size,1024)))),2).' '.$unit[$i];
 	}

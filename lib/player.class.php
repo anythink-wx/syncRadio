@@ -15,6 +15,7 @@ class player{
 
 	public function __construct(){
 		$this->dataPath = ROOT . '/data';
+		serverLog('初始化播放列表');
 		$this->loadMusicList();
 	}
 
@@ -28,11 +29,10 @@ class player{
 			$playList = conf::$config['play']['default'];
 			$this->playList = $playList;
 		}
-		echo '加载歌曲列表:'.$playList.PHP_EOL;
-
 		$list = $contents = "";
 		$file =  ROOT.'/list/'.$this->playList;
-		echo $file.PHP_EOL;
+		serverLog('加载歌曲列表'.$file.PHP_EOL);
+
 		if(!file_exists($file)){
 			file_put_contents($file,"");
 		}else{
@@ -78,7 +78,7 @@ class player{
 	static function getPlayUrl($id){
 		$data = [];
 		$uri = 'http://www.xiami.com/song/playlist/id/' . $id;
-		echo 'loadurl . ' . $uri .PHP_EOL;
+		serverLog('加载资源：'.$id.' ,loadUrl . ' . $uri);
 		$xml_info = ROOT.'/data/'.$id.'.xml';
 
 		if(file_exists($xml_info) && (filectime($xml_info) + 21600 > time())){
@@ -121,44 +121,45 @@ class player{
 					$index = array_rand($play_list,1);
 					$music = $play_list[$index];
 					$db->update('playSelect',['id' => $music['id']],['isPlay' => 1]);
-					echo '抽取点播随机歌曲'.$music['xiami_id'].PHP_EOL;
-					echo '曲库剩余:'.count($play_list).PHP_EOL;
+					serverLog('抽取点播随机歌曲'.$music['xiami_id'].', 曲库剩余'.count($play_list));
 					return $music['xiami_id'];
 				}else{
 					$music = $play_list[0];
 					$db->update('playSelect',['id'=>$music['id']],['isPlay' => 1]);
-					echo '正常抽取点播歌曲'.$music['xiami_id'].PHP_EOL;
+					serverLog('正常抽取点播歌曲'.$music['xiami_id']);
 					return $music['xiami_id'];
 				}
 			}
 		}
 
 
-		echo '无点播歌曲，走系统播放歌单'.PHP_EOL;
+		serverLog('无点播歌曲，走系统播放歌单');
 		$random = conf::$config['play']['random'];
 		if($random){
-
             $play_list = $db->findAll("playNow",'isPlay = 0');
+			serverLog('取出尚未播放列表 player.class #141');
+			serverLog(json_encode($play_list));
             if(is_array($play_list)){
                 $index = array_rand($play_list,1);
-
                 $music = $play_list[$index];
                 $db->update('playNow',['id' => $music['id']],['isPlay' => 1]);
-                echo '抽取随机歌曲'.$music['xiami_id'].PHP_EOL;
-                echo '曲库剩余:'.count($play_list).PHP_EOL;
+				serverLog('抽取随机歌曲'.$music['xiami_id'].',曲库剩余:'.count($play_list));
 
             }else{
-                echo '曲库已经没有可播放列表'.PHP_EOL;
+				serverLog('$play_list 为空 曲库已经没有可播放列表 player.classs #153');
             }
 
 		}else{
 			$db = new db();
             $music = $db->first("playNow",'isPlay = 0  limit 1');
             $db->update('playNow',['id'=>$music['id']],['isPlay' => 1]);
-			echo '正常抽取歌曲'.$music['xiami_id'].PHP_EOL;
+			serverLog('正常抽取歌曲 '.$music['xiami_id'].'player.classs #158');
 		}
 
-		if(!$music) return false;
+		if(!$music){
+			serverLog('return $music false player.class #160');
+			return false;
+		}
 		return $music['xiami_id'];
 	}
 
