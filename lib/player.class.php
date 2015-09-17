@@ -16,7 +16,10 @@ class player{
 	public function __construct(){
 		$this->dataPath = ROOT . '/data';
 		serverLog('初始化播放列表');
-		$this->loadMusicList();
+		$db = new db();
+		if(!$db->first('playNow',"isPlay = 0")){
+			$this->loadMusicList();
+		}
 	}
 
 
@@ -148,7 +151,6 @@ class player{
             }else{
 				serverLog('$play_list 为空 曲库已经没有可播放列表 player.classs #153');
             }
-
 		}else{
 			$db = new db();
             $music = $db->first("playNow",'isPlay = 0  limit 1');

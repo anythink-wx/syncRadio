@@ -11,7 +11,7 @@ class db{
 
     function __construct(){
         if(!$this->db  = new SQLite3(ROOT.'/'.$this->file)){
-			if($this->db->lastErrorCode() != 100){
+			if($this->db->lastErrorCode() != 100 and $this->db->lastErrorCode() != 101){
 				serverLog('db notice:'. $this->db->lastErrorCode().' # '. $this->db->lastErrorMsg());
 			}
         }
@@ -24,7 +24,7 @@ class db{
         $sql = "select * from " .$table .' '. $where;
         if($res = $this->db->query($sql)){
 			$row = $res->fetchArray(SQLITE3_ASSOC);
-			if($this->db->lastErrorCode() != 100){
+			if($this->db->lastErrorCode() != 100 and $this->db->lastErrorCode() != 101){
 				serverLog('db notice:'. $this->db->lastErrorCode().' # '. $this->db->lastErrorMsg());
 				serverLog($sql);
 			}
@@ -47,7 +47,7 @@ class db{
 					$data[] = $row;
 				}
 			}
-			if($this->db->lastErrorCode() != 100){
+			if($this->db->lastErrorCode() != 100 and $this->db->lastErrorCode() != 101){
 				serverLog('db notice:'. $this->db->lastErrorCode().' # '. $this->db->lastErrorMsg());
 				serverLog($sql);
 			}
@@ -81,7 +81,7 @@ class db{
         $sql = "UPDATE $table SET {$values} {$where}";
        // echo $sql.PHP_EOL;
         $ret = $this->db->exec($sql);
-		if($this->db->lastErrorCode() != 100){
+		if($this->db->lastErrorCode() != 100 and $this->db->lastErrorCode() != 101){
 			serverLog('db notice:'. $this->db->lastErrorCode().' # '. $this->db->lastErrorMsg());
 			serverLog($sql);
 		}

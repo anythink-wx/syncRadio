@@ -128,9 +128,8 @@ class Server {
 			if($play_time > 0){
 				$play_time-=$speed;
 				shareAccess('play_time',$play_time);
-				$this->serverLog('正在播放:'.$play_id.' 剩余:'.$play_time.'s');
 				if($play_time %10 ==0){
-					//$this->serverLog('正在播放 剩余 '.$play_time);
+					$this->serverLog('正在播放:'.$play_id.' 剩余:'.$play_time.'s');
 				}
 			}else{
 				shareAccess('play_time',0);
