@@ -74,6 +74,7 @@ class Server {
 
         $this->server = $server;
         $this->player = new player();
+		$this->player->loadMusicList();
         $this->event  = new event();
 		shareAccess('online',0);
 		shareAccess('play_id',0);
@@ -123,7 +124,7 @@ class Server {
 	function onPlay(){
 		$play_id = shareAccess('play_id');
 		$play_time = shareAccess('play_time');
-        $speed=1;
+        $speed=50;
 		if($play_id !=0){
 			if($play_time > 0){
 				$play_time-=$speed;
@@ -171,7 +172,7 @@ class Server {
 
 					}else{
 						//$player->loadMusicList();
-						$this->serverLog('没有成功拉取到下一首歌');
+						$this->serverLog('没有成功拉取到下一首歌 loadProcess');
 					}
 				}
 				sleep(1);

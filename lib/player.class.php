@@ -15,11 +15,6 @@ class player{
 
 	public function __construct(){
 		$this->dataPath = ROOT . '/data';
-		serverLog('初始化播放列表');
-		$db = new db();
-		if(!$db->first('playNow',"isPlay = 0")){
-			$this->loadMusicList();
-		}
 	}
 
 
@@ -142,7 +137,7 @@ class player{
             $play_list = $db->findAll("playNow",'isPlay = 0');
 			serverLog('取出尚未播放列表 player.class #141');
 			serverLog(json_encode($play_list));
-            if(is_array($play_list)){
+            if(!empty($play_list)){
                 $index = array_rand($play_list,1);
                 $music = $play_list[$index];
                 $db->update('playNow',['id' => $music['id']],['isPlay' => 1]);
@@ -153,12 +148,15 @@ class player{
             }
 		}else{
 			$db = new db();
-            $music = $db->first("playNow",'isPlay = 0  limit 1');
-            $db->update('playNow',['id'=>$music['id']],['isPlay' => 1]);
-			serverLog('正常抽取歌曲 '.$music['xiami_id'].'player.classs #158');
+			$play_list = $db->findAll("playNow",'isPlay = 0');
+			if(!empty($play_list)){
+				$music = $play_list[0];
+				$db->update('playNow',['id'=>$music['id']],['isPlay' => 1]);
+				serverLog('正常抽取歌曲 '.$music['xiami_id'].' 剩余'.count($play_list).' player.classs #158');
+			}
 		}
 
-		if(!$music){
+		if(!isset($music)){
 			serverLog('return $music false player.class #160');
 			return false;
 		}
