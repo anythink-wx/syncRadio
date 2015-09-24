@@ -6,22 +6,21 @@
  * Time: 下午7:26
  */
 define('ROOT',substr(__DIR__,0,-7));
-$config = 'server.ini';
 require(__DIR__ . '/../lib/player.class.php');
 require(__DIR__ . '/../lib/web.class.php');
 require(__DIR__ . '/../lib/functions.php');
-new conf();
-if(isset(conf::$config['web']['socket'])){
-	$server = conf::$config['web']['socket'].':'. conf::$config['server']['port'];
-}else{
-	$server = $_SERVER['REMOTE_ADDR'].':'. conf::$config['server']['port'];
-}
+require(__DIR__ . '/../lib/sqlite.class.php');
 
-$server = !empty(conf::$config['web']['socket']) ? conf::$config['web']['socket'] : $_SERVER['REMOTE_ADDR'];
-$server = $server .':'. conf::$config['server']['port'];
-if(isset($_GET['ajax']) && $_GET['ajax'] != '' ){
-	$web = new web();
-	$ret = $web->run($_GET['ajax']);
+$config = shareAccess('config');
+$server = isset($config['web']['socket']) ? $config['web']['socket'] :  $_SERVER['REMOTE_ADDR'];
+$server .= ':'. $config['server']['port'];
+if($_SERVER['QUERY_STRING']){
+	$ret = (new web)->run();
 	exit($ret);
 }
-include ROOT.'/tpl/online.phtml';
+
+if(!$config){
+	include ROOT.'/tpl/stop.phtml';
+}else{
+	include ROOT.'/tpl/online.phtml';
+}

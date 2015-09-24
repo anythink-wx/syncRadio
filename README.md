@@ -17,6 +17,11 @@
 	web客户端及管理后台
 	将public/目录绑定到一个域名，设置index.php为默认页面，否则不能正常访问web
 
+	权限说明
+	根目录及所有目录需设置为web用户启动的用户，否则sqlite将无法正常读写数据库。
+	如 Ubuntu : chown -R www-data.www-data music-github/
+	   MacOs  : chown -R _www:_www music-github/
+
 	iOS客户端
 	正在研发
 

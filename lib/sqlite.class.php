@@ -7,10 +7,19 @@
  */
 class db{
     private $file = 'music.db';
+	private static $_instance;
     private $db;
 
-    function __construct(){
-        if(!$this->db  = new SQLite3(ROOT.'/'.$this->file)){
+	static function getInstance(){
+		if (self::$_instance) {
+			return self::$_instance;
+		}else{
+			self::$_instance = new self();
+			return self::$_instance;
+		}
+	}
+	function __construct(){
+        if(!$this->db  = new SQLite3(ROOT.'/'.$this->file,SQLITE3_OPEN_READWRITE)){
 			if($this->db->lastErrorCode() != 100 and $this->db->lastErrorCode() != 101 and $this->db->lastErrorCode() != 0){
 				serverLog('db notice:'. $this->db->lastErrorCode().' # '. $this->db->lastErrorMsg());
 			}
@@ -103,9 +112,18 @@ class db{
 
     }
 
+	function delete($table,$row){
+		$sql = "DELETE FROM $table WHERE $row";
+		return $this->db->exec($sql);
+	}
+
     function truncate($table){
         $sql = "DELETE FROM $table ";
        // echo $sql.PHP_EOL;
         return $this->db->exec($sql);
     }
+
+	function exec($sql){
+		$this->db->exec($sql);
+	}
 }

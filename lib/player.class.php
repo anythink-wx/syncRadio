@@ -24,7 +24,8 @@ class player{
 	public function loadMusicList($playList=''){
 		$this->playList = $playList;
 		if(!$playList){
-			$playList = conf::$config['play']['default'];
+			$config = shareAccess('config');
+			$playList = $config['play']['default'];
 			$this->playList = $playList;
 		}
 		$list = $contents = "";
@@ -37,8 +38,8 @@ class player{
 			$contents = file_get_contents($file);
 		}
 		$_list = explode("\r\n",$contents);
-		$db = new db();
-        $db->truncate('playNow');
+		$db  = db::getInstance();
+		$db->truncate('playNow');
         foreach($_list as $id){
             $id = trim($id);
             if($id != ''){
@@ -49,8 +50,8 @@ class player{
 
 
 	function pushMusicList($id){
-        $db = new db();
-        $list = $db->findAll('playNow',"isPlay = 0");
+		$db  = db::getInstance();
+		$list = $db->findAll('playNow',"isPlay = 0");
         $db->create('playNow',['xiami_id'=>$id]);
 		$string = implode("\r\n",$list);
 		$file =  ROOT.'/lib/'.$this->playList;
@@ -61,7 +62,7 @@ class player{
 	 * 点播歌单
 	 */
 	function pushSelectList($id){
-		$db = new db();
+		$db  = db::getInstance();
 		$res = $db->first('playSelect',"xiami_id = $id");
 		if(!$res){
 			return $db->create('playSelect',['xiami_id'=>$id]);
@@ -108,11 +109,12 @@ class player{
 	function shiftMusicList($preLoad=false){
 		new conf();
 
-		$select_song = conf::$config['song']['select_song'];
-		$db = new db();
+		$config = shareAccess('config');
+		$select_song = $config['song']['select_song'];
+		$db  = db::getInstance();
 
 		if($select_song){
-			$random = conf::$config['song']['random'];
+			$random = $config['song']['random'];
 			$play_list = $db->findAll("playSelect",'isPlay = 0');
 			if($play_list){
 				if($random){
@@ -132,7 +134,7 @@ class player{
 
 
 		serverLog('无点播歌曲，走系统播放歌单');
-		$random = conf::$config['play']['random'];
+		$random = $config['play']['random'];
 		if($random){
             $play_list = $db->findAll("playNow",'isPlay = 0');
 			serverLog('取出尚未播放列表 player.class #141');
@@ -147,7 +149,6 @@ class player{
 				serverLog('$play_list 为空 曲库已经没有可播放列表 player.classs #153');
             }
 		}else{
-			$db = new db();
 			$play_list = $db->findAll("playNow",'isPlay = 0');
 			if(!empty($play_list)){
 				$music = $play_list[0];

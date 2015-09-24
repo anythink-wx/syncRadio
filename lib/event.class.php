@@ -20,9 +20,10 @@ abstract class baseEvent{
 	 * @param swoole_websocket_server $server 服务worker
 	 */
 	function broadcast($badge,swoole_websocket_server $server){
-		$user = shareAccess('user');
-		foreach($user as $fd){
-			$server->push($fd,$badge);
+		$db  = db::getInstance();
+		$users = $db->findAll('User',"fd != ''");
+		foreach($users as $user){
+			$server->push($user['fd'],$badge);
 		}
 	}
 

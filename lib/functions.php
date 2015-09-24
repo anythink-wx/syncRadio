@@ -38,7 +38,7 @@ class kv {
  * @param string $v
  */
 function shareAccess($key,$v=false){
-	$db  = new db();
+	$db  = db::getInstance();
 	$res = $db->first('meta',"meta_name = '$key'");
 	if($v !== false){
 		if($res){
@@ -59,7 +59,7 @@ function serverLog($msg){
 	$logPath = ROOT .'/data/server.log';
 	$msgFormat = '['.date('Y-m-d H:i:s').'] '.$msg.' Memusage'.convert(memory_get_usage(true)) . PHP_EOL;
 	file_put_contents($logPath,$msgFormat,FILE_APPEND);
-	echo $msg.PHP_EOL;
+	//echo $msg.PHP_EOL;
 }
 
 

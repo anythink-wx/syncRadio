@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="author" content="anythink">
+	<title>Dashboard</title>
+	<link href="static/css/bootstrap.min.css" rel="stylesheet">
+	<link href="static/css/bootstrap-switch.min.css" rel="stylesheet">
+	<link href="static/css/dashboard.css" rel="stylesheet">
+</head>
+<body style="background-color:  #f1f1f1">
+<main id="content" role="main">
+	<div id="content" class="bs-docs-header">
+		<div class="container">
+			<h1><img src="static/img/dashboard.png"> SyncRadio <small>v1.0</small></h1>
+		</div>
+	</div>
+	<hr size="1">
+	<div class="container">
+		<div class="col-lg-4">
+			<h2>播放列表 <a href="" class="btn btn-info btn-sm pull-right">添加列表</a> </h2>
+			<ul class="list-group">
+				<li class="list-group-item"></li>
+				<li class="list-group-item">
+				</li>
+				<li class="list-group-item"></li>
+			</ul>
+		</div>
+
+		<div class="col-lg-4">
+			<h2>播控设置</h2>
+			<div class="list-group">
+
+			</div>
+			<ul class="list-group">
+				<li class="list-group-item"><input id="cut_music" data-label-text="切歌" data-label-width="100" type="checkbox" /></li>
+				<li class="list-group-item"><input id="play_random" data-label-text="随机播放" data-label-width="100" type="checkbox"/>
+				</li>
+				<li class="list-group-item"><input id="play_loop" data-label-text="列表循环" data-label-width="100" type="checkbox"/>
+				</li>
+			</ul>
+		</div>
+		<div class="col-lg-4">
+			<h2>点歌设置</h2>
+			<div class="list-group">
+
+			</div>
+			<ul class="list-group">
+				<li class="list-group-item"> <input id="select_song" data-label-text="点歌功能" data-label-width="100" type="checkbox" /></li>
+				<li class="list-group-item"> <input id="select_song_random" data-label-text="随机播放" data-label-width="100" type="checkbox" /></li>
+				<li class="list-group-item">点歌间隔 <input type="number" id="select_song_rate" style="width: 105px">秒</li>
+			</ul>
+		</div>
+	</div>
+</main>
+<footer class="bs-docs-footer">
+	<div class="container">
+		<p>Code licensed under <a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank">Apache License, Version 2.0</a>
+			<br>Created by <a href="https://github.com/anythink-wx/syncRadio" target="_blank">anythink</a>
+		</p>
+	</div>
+</footer>
+<script src="static/js/jquery-1.11.1.min.js"></script>
+<script src="static/js/bootstrap.min.js"></script>
+<script src="static/js/bootstrap-switch.min.js"></script>
+<script>
+	$(function(argument) {
+		$('[type="checkbox"]').bootstrapSwitch();
+		$.ajax({
+			url: '/admin?ajax=config',
+			success: function (res) {
+				console.log(res);
+				if (res.code == 0) {
+					$('#play_loop').bootstrapSwitch('state', res.body.play.loop, true);
+					$('#play_random').bootstrapSwitch('state', res.body.play.random, true);
+					$('#select_song').bootstrapSwitch('state', res.body.song.select_song, true);
+					$('#select_song_random').bootstrapSwitch('state', res.body.song.random, true);
+					$('#select_song_rate').val(res.body.song.select_song_rate);
+					console.log(res.body.song.select_song);
+				} else {
+					alert(res.message);
+				}
+			},
+			error:function(){
+				alert('无法获取配置信息，请刷新页面');
+			},
+			dataType: 'json'
+		});
+
+		$('#cut_music').on('switchChange.bootstrapSwitch', function (e, data) {
+			$.get('/admin?ajax=config&controller=cut',function(res){
+				setTimeout(function(){
+					$('#cut_music').bootstrapSwitch('state',false, true);
+				},1000);
+			});
+		});
+
+		$('#play_random').on('switchChange.bootstrapSwitch', function (e, data) {
+			$.get('/admin?ajax=config&controller=play_random&switch='+data);
+		});
+
+		$('#play_loop').on('switchChange.bootstrapSwitch', function (e, data) {
+			$.get('/admin?ajax=config&controller=play_loop&switch='+data);
+		});
+
+		$('#select_song').on('switchChange.bootstrapSwitch', function (e, data) {
+			$.get('/admin?ajax=config&controller=select_song&switch='+data);
+		});
+
+		$('#select_song_random').on('switchChange.bootstrapSwitch', function (e, data) {
+			$.get('/admin?ajax=config&controller=select_song_random&switch='+data);
+		});
+		$('#select_song_rate').change(function(res){
+			$.get('/admin?ajax=config&controller=select_song_rate&switch='+$(this).val());
+		});
+
+
+
+
+	})
+</script>
+</body>
+</html>

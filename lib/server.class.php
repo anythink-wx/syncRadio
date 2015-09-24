@@ -5,27 +5,6 @@
  * Date: 15-8-3
  * Time: 下午6:32
  */
-
-class admin{
-
-    function auth(&$request,&$response){
-
-        print_r($request);
-
-        if (!isset($request->header['authorization'])) {
-
-            $response->header('WWW-Authenticate',' Basic realm="Dashboard"');
-            $response->status(401);
-            $response->end( 'Text to send if user hits Cancel button');
-           return false;
-        } else {
-           // echo "<p>Hello {$request->header['authorization']}.</p>";
-          //  echo "<p>You entered {$_SERVER['PHP_AUTH_PW']} as your password.</p>";
-        }
-
-        return false;
-    }
-}
 class Server {
 
 	protected $playerFlag = -1;             //播放服务状态
@@ -44,12 +23,15 @@ class Server {
 
 	function init(){
 		if(!class_exists('swoole_websocket_server')){
-			exit("This server need swoole php extension ".PHP_EOL."please run pecl install swoole installed".PHP_EOL);
+			exit("This server need swoole php extension ".PHP_EOL."please run pecl install swoole ".PHP_EOL);
 		}
+		//载入配置文件至共享存储
+		$config = parse_ini_file( ROOT.'/conf/default.ini',true);
+		shareAccess('config',$config);
+
 		@swoole_set_process_name('syncRadio');
         $this->clearRunTimeFile();
-        new conf();
-		$server = new swoole_websocket_server(conf::$config['server']['listen'], conf::$config['server']['port']);
+		$server = new swoole_websocket_server($config['server']['listen'], $config['server']['port']);
         $server->addProcess($this->loadProcess());
         $server->on('open', [$this, 'onOpen']);
         $server->on('message', [$this, 'onMessage']);
@@ -57,15 +39,16 @@ class Server {
         $server->on('request',[$this,'onRequest']);
         $server->on('start',[$this,'onStart']);
         $server->on('shutdown',[$this,'onShutdown']);
+		$server->on('workerStart',[$this,'onWorkerStart']);
         $server->set([
-			'reactor_num' => conf::$config['server']['reactor_num'],
-			'worker_num' => conf::$config['server']['worker_num'],
-			'backlog' => conf::$config['server']['backlog'],
-			'max_request' => conf::$config['server']['max_request'],
-            'daemonize' => conf::$config['server']['daemonize'],
-            'log_file'  => conf::$config['server']['log_file'],
-            'user' => conf::$config['server']['user'],
-            'group' =>conf::$config['server']['group'],
+			'reactor_num' => $config['server']['reactor_num'],
+			'worker_num' => $config['server']['worker_num'],
+			'backlog' => $config['server']['backlog'],
+			'max_request' => $config['server']['max_request'],
+            'daemonize' => $config['server']['daemonize'],
+            'log_file'  => $config['server']['log_file'],
+            'user' => $config['server']['user'],
+            'group' =>$config['server']['group'],
 		]);
 
 
@@ -79,7 +62,15 @@ class Server {
 		shareAccess('online',0);
 		shareAccess('play_id',0);
 		shareAccess('play_time',0);
+		$db = db::getInstance();
+		$db->exec("DELETE from User where provider_id IS NULL ");
+		$db->exec("UPDATE User set fd = 0");
     }
+
+	function onWorkerStart($server, $worker_id){
+		@swoole_set_process_name("php {$worker_id} event worker");
+		serverLog("php {$worker_id} task worker");
+	}
 
     function onStart(swoole_server $server){
         @swoole_set_process_name('syncRadio:manager');
@@ -88,7 +79,7 @@ class Server {
 
 	function onOpen(swoole_websocket_server $_server, swoole_http_request $request)	{
 		$status = $_server->connection_info($request->fd);
-		if($status['websocket_status'] != 0){
+		if($status['websocket_status'] == 3){
 			//判断是否启动播放服务
 			if (shareAccess('online') == 0 && $this->playerFlag == -1) {
 				$this->playerFlag = swoole_timer_tick(1000,[$this,'onPlay']);
@@ -118,7 +109,9 @@ class Server {
 	}
 
     function onShutdown(swoole_websocket_server $_server){
-        $this->serverLog('服务器已退出');
+		$db = db::getInstance();
+		//$db->exec("DELETE from User where fd !=0 and provider_id = ''");
+		$this->serverLog('服务器已退出');
     }
 
 	function onPlay(){

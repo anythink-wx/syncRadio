@@ -23,14 +23,13 @@ class user extends  baseEvent{
 
 
 	function open(swoole_websocket_server $server,swoole_http_request $request){
-		$user = shareAccess('user');
-		$user[$request->fd] = $request->fd;
-		shareAccess('user',$user);
+
+		$db  = db::getInstance();
+		$db->create('User',['fd'=>$request->fd,'ipaddress'=>$request->server['remote_addr'] ]);
 
 		$online = shareAccess('online');
 		$online+=1;
 		shareAccess('online',$online);
-
 
 		$this->broadcast(Server::badge('online',$online),$server); //广播在线用户数
 		$this->eventLog(__CLASS__,'已记录当前用户连接 #'.$request->fd .'当前在线:'.$online);
@@ -43,7 +42,8 @@ class user extends  baseEvent{
 			$online = count($server->connections);
 			$server->push($frame->fd,Server::badge('online',$online));
 		}elseif($badge->act =='addsong'){
-			$rate = conf::$config['song']['select_song_rate'];
+			$config = shareAccess('song');
+			$rate = $config['song']['select_song_rate'];
 
 			if(limit::verify('add_song_'.$frame->fd,$rate)){
 				echo '点歌频次限制'.$rate.PHP_EOL;
@@ -64,11 +64,8 @@ class user extends  baseEvent{
 	}
 
 	function close(swoole_websocket_server $server, $fd){
-
-		$user = shareAccess('user');
-		unset($user[$fd]);
-		shareAccess('user',$user);
-
+		$db  = db::getInstance();
+		$db->delete('User',"fd = $fd");
 		$online = shareAccess('online');
 		$online-=1;
 		shareAccess('online',$online);
