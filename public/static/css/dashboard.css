@@ -12,3 +12,7 @@ body {
 .container h1 small{
 	font-size: 12px;
 }
+
+#play_title{
+	font-size: 16px;
+}

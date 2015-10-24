@@ -19,7 +19,29 @@
 	</div>
 	<hr size="1">
 	<div class="container">
-		<div class="col-lg-4">
+		<div class="col-lg-3">
+			<h2>服务状态  </h2>
+			<ul class="list-group">
+				<li class="list-group-item clearfix">
+					<div class="pull-left">
+						<img class="img-rounded" style="max-width: 100px" id="cover">
+						<!--<span class="glyphicon glyphicon-align-left" aria-hidden="true"></span>-->
+					</div>
+					<div class="pull-left" style="margin-left: 10px">
+						<div id="play_title"></div>
+						<div id="play_album"></div>
+						<div id="play_artist"></div>
+					</div>
+
+				</li>
+				<li class="list-group-item" id="server_status">正在连接</li>
+				<li class="list-group-item">
+				</li>
+				<li class="list-group-item"></li>
+			</ul>
+		</div>
+		<div id="console"></div>
+		<div class="col-lg-3">
 			<h2>播放列表 <a href="" class="btn btn-info btn-sm pull-right">添加列表</a> </h2>
 			<ul class="list-group">
 				<li class="list-group-item"></li>
@@ -29,27 +51,26 @@
 			</ul>
 		</div>
 
-		<div class="col-lg-4">
+		<div class="col-lg-3">
 			<h2>播控设置</h2>
 			<div class="list-group">
 
 			</div>
 			<ul class="list-group">
-				<li class="list-group-item"><input id="cut_music" data-label-text="切歌" data-label-width="100" type="checkbox" /></li>
-				<li class="list-group-item"><input id="play_random" data-label-text="随机播放" data-label-width="100" type="checkbox"/>
+				<li class="list-group-item">切歌 <input id="cut_music" type="checkbox" /></li>
+				<li class="list-group-item">随机播放 <input id="play_random"  type="checkbox"/>
 				</li>
-				<li class="list-group-item"><input id="play_loop" data-label-text="列表循环" data-label-width="100" type="checkbox"/>
+				<li class="list-group-item">列表循环 <input id="play_loop"  type="checkbox"/>
 				</li>
 			</ul>
 		</div>
-		<div class="col-lg-4">
+		<div class="col-lg-3">
 			<h2>点歌设置</h2>
 			<div class="list-group">
-
 			</div>
 			<ul class="list-group">
-				<li class="list-group-item"> <input id="select_song" data-label-text="点歌功能" data-label-width="100" type="checkbox" /></li>
-				<li class="list-group-item"> <input id="select_song_random" data-label-text="随机播放" data-label-width="100" type="checkbox" /></li>
+				<li class="list-group-item"> 点歌功能 <input id="select_song"  type="checkbox" /></li>
+				<li class="list-group-item">随机播放  <input id="select_song_random" type="checkbox" /></li>
 				<li class="list-group-item">点歌间隔 <input type="number" id="select_song_rate" style="width: 105px">秒</li>
 			</ul>
 		</div>
@@ -66,19 +87,45 @@
 <script src="static/js/bootstrap.min.js"></script>
 <script src="static/js/bootstrap-switch.min.js"></script>
 <script>
+	var ws = new WebSocket('ws://<?=$server;?>');
+	var isConnect = 0;
+	ws.onopen = function(evt){
+		$('#server_status').html('已连接');
+		isConnect=1;
+		ws.send('{"act":"sync"}');
+	};
+	ws.onmessage = function(evt){
+		console.log(evt.data);
+		var res = eval('(' + evt.data + ')');
+		console.log(res);
+		if(res.act =='sync'){
+			$('#cover').attr('src',res.data.cover);
+			$('#play_title').html(res.data.title);
+			$('#play_album').html(res.data.album);
+			$('#play_artist').html(res.data.artist);
+		}
+	};
+	ws.onclose = function(evt){
+		$('#server_status').html('已停止');
+	};
+	ws.onerror = function(evt){
+		$('#server_status').html('已停止');
+	}
+	console.log(ws);
 	$(function(argument) {
+
+
+
 		$('[type="checkbox"]').bootstrapSwitch();
 		$.ajax({
 			url: '/admin?ajax=config',
 			success: function (res) {
-				console.log(res);
 				if (res.code == 0) {
 					$('#play_loop').bootstrapSwitch('state', res.body.play.loop, true);
 					$('#play_random').bootstrapSwitch('state', res.body.play.random, true);
 					$('#select_song').bootstrapSwitch('state', res.body.song.select_song, true);
 					$('#select_song_random').bootstrapSwitch('state', res.body.song.random, true);
 					$('#select_song_rate').val(res.body.song.select_song_rate);
-					console.log(res.body.song.select_song);
 				} else {
 					alert(res.message);
 				}
@@ -91,6 +138,9 @@
 
 		$('#cut_music').on('switchChange.bootstrapSwitch', function (e, data) {
 			$.get('/admin?ajax=config&controller=cut',function(res){
+				if(isConnect){
+					ws.send('{"act":"sync"}');
+				}
 				setTimeout(function(){
 					$('#cut_music').bootstrapSwitch('state',false, true);
 				},1000);

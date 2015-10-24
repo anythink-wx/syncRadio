@@ -107,7 +107,6 @@ class player{
 	 * @return string
 	 */
 	function shiftMusicList($preLoad=false){
-		new conf();
 
 		$config = shareAccess('config');
 		$select_song = $config['song']['select_song'];

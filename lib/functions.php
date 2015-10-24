@@ -7,30 +7,13 @@
  */
 
 
-class kv {
-	public static function __callStatic($name, $arguments)	{
-		if(empty($arguments)){
-			return self::shareGet($name);
-		}else{
-			return self::sharePut($name,$arguments[0]);
-		}
-	}
+$play_time = new swoole_atomic(0);
+$online_count = new swoole_atomic(0);
 
-	static function sharePut($k,$v){
-		$file = ROOT.'/data/'.$k;
-		file_put_contents($file,serialize($v),LOCK_EX);
-	}
 
-	static function shareGet($k){
-		$file = ROOT.'/data/'.$k;
-		if(file_exists($file)){
-			return unserialize(file_get_contents($file));
-		}else{
-			return false;
-		}
-
-	}
-}
+$memTable = new swoole_table(1024);
+$memTable->column('v',swoole_table::TYPE_STRING,65535);
+$memTable->create();
 
 /**
  * 数据共享存取
@@ -38,18 +21,19 @@ class kv {
  * @param string $v
  */
 function shareAccess($key,$v=false){
-	$db  = db::getInstance();
-	$res = $db->first('meta',"meta_name = '$key'");
-	if($v !== false){
-		if($res){
-			return $db->update('meta',['meta_name' => $key],['meta_val' => serialize($v)]);
-		}else{
-			return $db->create('meta',['meta_name' => $key,'meta_val' => serialize($v)]);
-		}
+	global $memTable;
+	$access = '';
+
+	if($res = $memTable->get($key)){
+		$access = unserialize($res['v']);
 	}
-	if($res){
-		serverLog('getKey:'.$key.' <-> '. json_encode(unserialize($res['meta_val'])));
-		return unserialize($res['meta_val']);
+	if($v !== false){
+		serverLog('put key:'.$key.' <-> '. json_encode($v));
+		return $memTable->set($key,['v'=>serialize($v)]);
+	}
+	if($access){
+		serverLog('getKey:'.$key.' <-> '. json_encode($access));
+		return $access;
 	}
 	return false;
 }
@@ -88,6 +72,7 @@ class conf{
 
 
 
+
 class limit{
 	static function verify($key,$time){
 		$res = shareAccess($key);
@@ -106,6 +91,109 @@ class limit{
 	}
 }
 
+
+
+class event  {
+	public static $on_list=[];
+	private static $init = [];
+
+	const EVENT_OPEN = 'open';
+	const EVENT_MESSAGE = 'message';
+	const EVENT_CLOSE = 'close';
+	/**
+	 * 给事件注册调用
+	 * @param $event
+	 * @param $callName
+	 */
+	public static function add($event,$callName){
+		if(!isset(self::$on_list[$event])){
+			self::$on_list[$event] = [];
+		}
+		array_push(self::$on_list[$event],$callName);
+	}
+
+	function eventOpen(){
+
+	}
+
+	function eventMessage(swoole_websocket_server $_server, $frame){
+		if(self::$on_list['message']){
+			foreach(self::$on_list['message'] as $class){
+				//echo 'call event message :'.$class.PHP_EOL;
+				if(!isset(self::$init[$class])){
+					self::$init[$class] = new $class();
+				}
+				call_user_func_array([self::$init[$class],'message'],[$_server,$frame]);
+			}
+		}
+	}
+
+	function eventClose(swoole_websocket_server $_server, $fd){
+		if(self::$on_list['message']){
+			foreach(self::$on_list['message'] as $class){
+				echo 'call event message :'.$class.PHP_EOL;
+				if(!isset(self::$init[$class])){
+					self::$init[$class] = new $class();
+				}
+				call_user_func_array([self::$init[$class],'close'],[$_server,$fd]);
+			}
+		}
+	}
+}
+
+
+
+class cmd{
+
+	public $method;
+	public $args;
+	protected $server;
+	protected $frame;
+	function __construct(swoole_websocket_server $_server, $frame){
+		$badge = isset($frame->data) ? Server::badgeDecode($frame->data):"";
+		if($badge){
+			list($controller,$method) = explode('|',$badge->act);
+			$this->controller = $controller;
+			$this->method = $method;
+			$this->args = isset($badge->data) ? $badge->data : "";
+		}
+		$this->server = $_server;
+		$this->frame = $frame;
+	}
+
+	/**
+	 * Message流程
+	 */
+	function message(){
+		if(method_exists($this,$this->method.'_cmd')){
+			call_user_func([$this,$this->method.'_cmd']);
+		}else{
+			serverLog('action :'.$this->controller .'/'. $this->method . '_cmd not found');
+		}
+	}
+
+	/**
+	 * Task流程初始化
+	 */
+	function task(){
+		if(method_exists($this,$this->method.'_task')){
+			call_user_func([$this,$this->method.'_task']);
+		}else{
+			serverLog('action :'.$this->controller .'/'. $this->method . '_task not found');
+		}
+	}
+
+	function broadcast($badge){
+		$this->server->task($badge);
+	}
+
+	function push($fd,$badge){
+		$this->server->push($fd ,$badge);
+	}
+
+}
+
+//event::add(event::EVENT_OPEN,['user','open']);
 
 
 function mime_content($filename) {

@@ -10,17 +10,15 @@ require(__DIR__ . '/../lib/player.class.php');
 require(__DIR__ . '/../lib/web.class.php');
 require(__DIR__ . '/../lib/functions.php');
 require(__DIR__ . '/../lib/sqlite.class.php');
+$config = parse_ini_file( ROOT.'/conf/default.ini',true);
+if($config){
+	$server = isset($config['web']['socket']) ? $config['web']['socket'] :  $_SERVER['REMOTE_ADDR'];
+	$server .= ':'. $config['server']['port'];
+}
 
-$config = shareAccess('config');
-$server = isset($config['web']['socket']) ? $config['web']['socket'] :  $_SERVER['REMOTE_ADDR'];
-$server .= ':'. $config['server']['port'];
 if($_SERVER['QUERY_STRING']){
 	$ret = (new web)->run();
 	exit($ret);
 }
 
-if(!$config){
-	include ROOT.'/tpl/stop.phtml';
-}else{
-	include ROOT.'/tpl/online.phtml';
-}
+include ROOT.'/tpl/online.phtml';
